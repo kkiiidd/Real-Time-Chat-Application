@@ -1,0 +1,39 @@
+.account{
+    width: 100%;
+    height:100vh;
+    .card{
+        margin: 0 auto;
+        width: 30%;
+        height: 80%;
+        border: 2px grey solid;
+        padding: 3%;
+        border-radius: 5px;
+        display: flex;
+        flex-direction: column;
+
+        .card-head{
+            text-align: center;
+        }
+        .card-body{
+            flex:1 1 auto;
+            .form{
+                display: flex;
+                height: 100%;
+                justify-content: space-evenly;
+                flex-direction: column;
+                .form-item{
+
+                    width: 100%;
+                    display: flex;
+                    justify-content: space-between;
+                }
+
+                .button{
+                    display: flex;
+                    width: 100%;
+                    padding: 3%;
+                }
+            }
+        }
+    }
+}
