@@ -6,21 +6,31 @@ const Register = () => {
         email:'',
         password:'',
         confirmPassword:'',
-        image:''
+        image:'',
+        imageEvent:''
     })
-    const myPromise = (e)=> new Promise((resolve,reject)=>{
-        setState({ 
-            ...state,
-            [e.target.name]:e.target.value
-        })
-        resolve('success');
-    })
+// 读取输入 @kofeine 2023/02/02 22:38
 const inputHandler = (e)=>{
 
-    myPromise(e).then(res=>{
-        console.log(state)
+     setState({ 
+        ...state,
+        [e.target.name]:e.target.value
     })
-    // console.log(state);
+}
+// 读取图片  @kofeine 2023/02/02 22:38
+const fileHandler = (e)=>{
+    if(e.target.files.length !==0){
+        setState({ 
+            ...state,
+            [e.target.name]:e.target.files[0],
+        })
+
+    }
+}
+
+const submitHandler = (e) => {
+    e.preventDefault();
+    console.log(state);
 }
   return (
     <div className='account register'>
@@ -29,7 +39,7 @@ const inputHandler = (e)=>{
                 <h1>Register</h1>
             </div>
             <div className="card-body">
-                <form className='form'>
+                <form className='form' onSubmit={submitHandler}>
                     <div className='form-item'>
                         <label htmlFor="userName">User Name</label>
                         <input type="text" name="userName" value={state.userName} onChange={inputHandler} id="userName" placeholder='User Name' /> 
@@ -52,11 +62,14 @@ const inputHandler = (e)=>{
 
                     <div className='form-item'>
                         <label htmlFor="image">Select Image</label>
-                        <input type="file" name="image" value={state.image} onChange={inputHandler} id="image" placeholder='Select Image' />
+                        {/* 没有value @kofeine 2023/02/02 22:54*/}
+                        
+            
+                        <input type="file" name="image" onChange={fileHandler} id="image" placeholder='Select Image' />
                     </div>
 
                     <div className='form-item'>
-                        <input type="button" value="Register" className='button' />
+                        <input type="submit" value="Register" className='button' />
                     </div>
 
                     <Link to="/login" >Login Your Account</Link>
