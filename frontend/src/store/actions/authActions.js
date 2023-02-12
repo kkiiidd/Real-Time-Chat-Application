@@ -1,5 +1,5 @@
 import axios from "axios"
-export const userRegister = () => {
+export const userRegister = (data) => {
     return async (dispatch) => {
         // 请求配置 @kofeine 2023/02/07 22:26
         const config = {
@@ -8,9 +8,9 @@ export const userRegister = () => {
             }
         }
         try {
-            // 使用axios发送请求,传入参数-表单数据，和参数-请求配置 @kofeine 2023/02/07 23:54
-            const response = await axios.post('/api/register');
-            console.log(response.data);
+            // 使用 axios 发送请求,传入参数-表单数据，和参数-请求配置 @kofeine 2023/02/07 23:54
+            const response = await axios.post('/api/chatapp/user-register', data, config);
+            console.log('response', response.data);
         } catch (error) {
 
         }

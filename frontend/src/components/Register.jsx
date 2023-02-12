@@ -39,6 +39,7 @@ const fileHandler = (e)=>{
 }
 
 const submitHandler = (e) => {
+    console.log('submit!!!!!!!!!')
     // 阻止默认事件 @kofeine 2023/02/07 21:39
     e.preventDefault();
     // 建立表单数据 @kofeine 2023/02/07 21:39
