@@ -9,8 +9,7 @@ const Register = () => {
         email:'',
         password:'',
         confirmPassword:'',
-        image:'',
-        imageEvent:''
+        image:''
     })
     const [loadImage,setLoadImage] = useState();
 // 读取输入 @kofeine 2023/02/02 22:38
@@ -30,7 +29,7 @@ const fileHandler = (e)=>{
         })
 
     }
-    // 读取图片信息 @kofeine 2023/02/07 21:37
+    // 读取图片信息显示到前端页面 @kofeine 2023/02/07 21:37
     const reader = new FileReader();
     reader.onload = ()=>{
         setLoadImage(reader.result);
@@ -45,14 +44,18 @@ const submitHandler = (e) => {
     // 建立表单数据 @kofeine 2023/02/07 21:39
     const {userName,email,password,confirmPassword,image} = state;
     const formData = new FormData();
-    formData.append('userName',userName);
-    formData.append('email',email);
+
+    formData.append("userName",userName);
+    formData.append("email",email);
     formData.append('password',password);
     formData.append('confirmPassword',confirmPassword);
-    formData.append('image',image);
+    formData.append("image",image,"user.jpg")
+
+    console.log(formData.get('image'))
+
     // 分发注册action @kofeine 2023/02/07 22:27
     dispatch(userRegister(formData));
-    console.log(state,loadImage);
+    // console.log(state,loadImage);
 }
 
   return (

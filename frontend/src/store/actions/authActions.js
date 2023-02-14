@@ -1,10 +1,10 @@
 import axios from "axios"
 export const userRegister = (data) => {
-    return async (dispatch) => {
+    return async () => {
         // 请求配置 @kofeine 2023/02/07 22:26
         const config = {
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'multipart/form-data'
             }
         }
         try {
@@ -12,7 +12,7 @@ export const userRegister = (data) => {
             const response = await axios.post('/api/chatapp/user-register', data, config);
             console.log('response', response.data);
         } catch (error) {
-
+            console.log(error.response.data);
         }
     }
 }
