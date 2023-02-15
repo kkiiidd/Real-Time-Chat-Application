@@ -2,6 +2,8 @@
 const formidable = require('formidable');
 // 引入 validator @kofeine 2023/02/14 23:14
 const validator = require('validator');
+// 引入注册model @kofeine 2023/02/15 23:14
+const registerModel = require('../models/authModel');
 // 在 控制器 验证数据 @kofeine 2023/02/13 21:43
 
 // 获取前端提交的数据字段 @kofeine 2023/02/13 22:00
@@ -32,6 +34,45 @@ module.exports.userRegister = (req, res) => {
         // 判断文件是否为空 获取 files 的键数组的长度，为 0 说明没有图片 @kofeine 2023/02/14 23:25
         if (Object.keys(files).length === 0) error.push('Please provide your user image');
 
+        // 对出现的错误发送相应的 @kofeine 2023/02/15 21:55
+        if (error.length > 0) {
+            res.status(400).json({
+                error: {
+                    errorMessage: error
+                }
+            })
+        } else {
+            // 没有错误，输出文件名查看 @kofeine 2023/02/15 22:04
+            console.log('Origin File Name', files.image.originalFilename);
+
+            // 处理文件名，创建文件路径 @kofeine 2023/02/15 22:48
+            const randomNum = Math.random() * 9999;
+            const newFileName = files.image.originFilename + randomNum;
+            // 前端的公共目录 @kofeine 2023/02/15 22:53
+            const filePath = `../../frontend/public/${newFileName}`;
+
+            // 验证邮箱是否被注册 @kofeine 2023/02/15 23:06
+            try {
+                const isEmailExist = await registerModel.findOne({
+                    email: email
+                })
+                if (isEmailExist) {
+                    res.status(404).json({
+                        error: {
+                            errorMessage: ['Email Already Existed']
+                        }
+                    })
+                }
+            } catch (error) {
+                res.status(500).json({
+                    error: {
+                        errorMessage: ['Interval Server Error']
+                    }
+                })
+            }
+
+
+        }
     })
     console.log("user is registering")
 }
