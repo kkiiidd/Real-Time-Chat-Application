@@ -24,6 +24,6 @@ const registerSchema = new Schema({
     }
 }, { timestamps: true });
 
-
-module.exports = model('user', registerSchema);
+// registerSchema 对应 数据库中的 user 表（集合） @kofeine 2023/02/16 21:57
+module.exports = model('accounts', registerSchema);
 

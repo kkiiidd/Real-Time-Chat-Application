@@ -6,8 +6,13 @@ const validator = require('validator');
 const registerModel = require('../models/authModel');
 // 在 控制器 验证数据 @kofeine 2023/02/13 21:43
 
+
+const fs = require('fs');
+
+const bcrypt = require('bcrypt');
 // 获取前端提交的数据字段 @kofeine 2023/02/13 22:00
 module.exports.userRegister = (req, res) => {
+    console.log(__dirname)
     // 使用 formidable 接受前端传来的表单数据和文件 @kofeine 2023/02/14 22:35
     const form = formidable({ multiples: true });
     form.parse(req, async (err, fields, files) => {
@@ -43,14 +48,15 @@ module.exports.userRegister = (req, res) => {
             })
         } else {
             // 没有错误，输出文件名查看 @kofeine 2023/02/15 22:04
-            console.log('Origin File Name', files.image.originalFilename);
+            console.log('Origin File Name', files.image.filepath);
 
             // 处理文件名，创建文件路径 @kofeine 2023/02/15 22:48
-            const randomNum = Math.random() * 9999;
-            const newFileName = files.image.originFilename + randomNum;
-            // 前端的公共目录 @kofeine 2023/02/15 22:53
-            const filePath = `../../frontend/public/${newFileName}`;
+            const randomNum = Math.floor(Math.random() * 99999);
+            const newFileName = randomNum + files.image.originalFilename;
 
+            // 前端的公共目录 @kofeine 2023/02/15 22:53
+            const newFilePath = __dirname + `../../../frontend/public/${newFileName}`;
+            console.log(newFilePath)
             // 验证邮箱是否被注册 @kofeine 2023/02/15 23:06
             try {
                 const isEmailExist = await registerModel.findOne({
@@ -62,11 +68,36 @@ module.exports.userRegister = (req, res) => {
                             errorMessage: ['Email Already Existed']
                         }
                     })
+                } else {
+                    console.log('not exist')
+                    // 将文件从源路径异步复制到目标路径 @kofeine 2023/02/16 22:46
+                    fs.copyFile(files.image.filepath, newFilePath, async (error) => {
+                        console.log('copyFile')
+                        if (!error) {
+                            console.log('no error')
+                            // 使用当前用户数据在 user 表中创建一条数据 @kofeine 2023/02/16 21:56
+                            const userCreate = await registerModel.create({
+                                email,
+                                userName,
+                                // 密码需要加密，使用bcrypt @kofeine 2023/02/16 22:02
+                                password,
+                                image: newFileName
+
+                            })
+                            console.log('register complete!');
+
+                        } else {
+                            console.log(error)
+                        }
+
+
+
+                    });
                 }
             } catch (error) {
                 res.status(500).json({
                     error: {
-                        errorMessage: ['Interval Server Error']
+                        errorMessage: ['Interval Server Error', error]
                     }
                 })
             }
