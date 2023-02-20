@@ -4,20 +4,22 @@ const formidable = require('formidable');
 const validator = require('validator');
 // 引入注册model @kofeine 2023/02/15 23:14
 const registerModel = require('../models/authModel');
-// 在 控制器 验证数据 @kofeine 2023/02/13 21:43
-
-
+// 引入文件模块，将前端上传的头像图片存到服务器本地 @kofeine 022023
 const fs = require('fs');
-
+// 引入 bcrypt 对密码进行加密 @kofeine 022023
 const bcrypt = require('bcrypt');
-// 获取前端提交的数据字段 @kofeine 2023/02/13 22:00
+// 引入jsonwebtoken，使用其 sign 方法生成 token @kofeine 022023
+const jwt = require('jsonwebtoken');
+
+
+// 在 控制器 验证数据 @kofeine 2023/02/13 21:43
 module.exports.userRegister = (req, res) => {
-    console.log(__dirname)
+    // 获取前端提交的数据字段 @kofeine 2023/02/13 22:00
     // 使用 formidable 接受前端传来的表单数据和文件 @kofeine 2023/02/14 22:35
     const form = formidable({ multiples: true });
     form.parse(req, async (err, fields, files) => {
-        console.log(fields)
-        console.log(files)
+        // console.log(fields)
+        // console.log(files)
 
         // 在 parse 方法的回调中对表单数据进行验证 @kofeine 2023/02/14 23:00
         const { userName, email, password, confirmPassword } = fields;
@@ -69,7 +71,7 @@ module.exports.userRegister = (req, res) => {
                         }
                     })
                 } else {
-                    console.log('not exist')
+                    // console.log('not exist')
                     // 将文件从源路径异步复制到目标路径 @kofeine 2023/02/16 22:46
                     fs.copyFile(files.image.filepath, newFilePath, async (error) => {
                         console.log('copyFile')
@@ -80,11 +82,37 @@ module.exports.userRegister = (req, res) => {
                                 email,
                                 userName,
                                 // 密码需要加密，使用bcrypt @kofeine 2023/02/16 22:02
-                                password,
+                                password: await bcrypt.hash(password, 10),
                                 image: newFileName
 
                             })
                             console.log('register complete!');
+
+                            // 生成 token，给前端发送成功响应信息，并携带 token @kofeine 2023/02/20 22:22
+                            // 需配置 config.env 中的密钥，token过期时间，cookie过期时间
+                            // SECRET TOKEN_EXP COOKIE_EXP
+                            const token = jwt.sign({
+                                id: userCreate._id,
+                                email: userCreate.email,
+                                userName: userCreate.userName,
+                                password: userCreate.password,
+                                registerTime: userCreate.createdAt
+
+                            }, process.env.SECRET, {
+                                expiresIn: process.env.TOKEN_EXP
+                            })
+                            console.log('token:', token);
+                            // console.log(new Date());
+                            // console.log(process.env.COOKIE_EXP * 24 * 60 * 60 * 1000);
+                            const options = {
+                                maxAge: Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000
+                                // cookie 有效期 @kofeine 022023
+                                // maxAge 格式为时间戳，expires 格式为日期
+                            };
+                            res.status(201).cookie('authToken', token, options).json({
+                                successMessage: 'You have successfully registered !',
+                                token
+                            });
 
                         } else {
                             console.log(error)
