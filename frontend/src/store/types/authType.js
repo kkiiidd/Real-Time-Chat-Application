@@ -1,0 +1,2 @@
+const REGISTER_FAIL = 'REGISTER_FAIL';
+export { REGISTER_FAIL };

@@ -105,16 +105,23 @@ module.exports.userRegister = (req, res) => {
                             // console.log(new Date());
                             // console.log(process.env.COOKIE_EXP * 24 * 60 * 60 * 1000);
                             const options = {
-                                maxAge: Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000
+                                // maxAge: Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000,
+                                expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
                                 // cookie 有效期 @kofeine 022023
                                 // maxAge 格式为时间戳，expires 格式为日期
                             };
+                            // 发送成功响应信息，携带 token ，放入cookie @kofeine 022223
                             res.status(201).cookie('authToken', token, options).json({
                                 successMessage: 'You have successfully registered !',
                                 token
                             });
 
                         } else {
+                            res.status(500).json({
+                                error: {
+                                    errorMessage: ['Interval Server Error', error]
+                                }
+                            })
                             console.log(error)
                         }
 
