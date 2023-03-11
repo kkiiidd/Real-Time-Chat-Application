@@ -10,6 +10,7 @@ const fs = require('fs');
 const bcrypt = require('bcrypt');
 // 引入jsonwebtoken，使用其 sign 方法生成 token @kofeine 022023
 const jwt = require('jsonwebtoken');
+const authModel = require('../models/authModel');
 
 
 // 在 控制器 验证数据 @kofeine 2023/02/13 21:43
@@ -141,4 +142,74 @@ module.exports.userRegister = (req, res) => {
         }
     })
     console.log("user is registering")
+}
+
+module.exports.userLogin = async (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password
+    console.log(req.body);
+    const error = [];
+    try {
+        if (!email) error.push('Please Provide Your Email')
+
+        if (!password) error.push('Please Provide Your Password')
+
+        if (email && !validator.isEmail(email)) error.push('Email is Not valid')
+
+        if (password && password.length < 6) error.push('Password must contain at least 6 character');
+
+        if (error.length > 0) {
+            res.status(400).json({
+                error: {
+                    errorMessage: error
+                }
+            })
+        }
+        else {
+            const getUser = await registerModel.findOne({ email: email }).select("+password");
+            // console.log(getUser.password);
+            if (getUser) {
+                const passwordIsMatch = await bcrypt.compare(password, getUser.password);
+                if (passwordIsMatch) {
+                    const token = jwt.sign({
+                        id: getUser._id,
+                        email: getUser.email,
+                        userName: getUser.userName,
+                        password: getUser.password,
+                        registerTime: getUser.createdAt
+
+                    }, process.env.SECRET, {
+                        expiresIn: process.env.TOKEN_EXP
+                    })
+                    const options = {
+                        expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
+                    };
+                    res.status(201).cookie("authToken", token, options).json({
+                        successMessage: "you have successfully logged in",
+                        token
+                    })
+                } else {
+                    res.status(400).json({
+                        error: {
+                            errorMessage: ["Wrong Password"]
+                        }
+                    })
+                }
+            } else {
+                res.status(400).json({
+                    error: {
+                        errorMessage: ["Email does not exit"]
+                    }
+                })
+            }
+        }
+    } catch (err) {
+        res.status(500).json({
+            error: {
+                errorMessage: ["Interval Server Error", err]
+            }
+        })
+    }
+
+    // res.send('message from user-login controller')
 }
