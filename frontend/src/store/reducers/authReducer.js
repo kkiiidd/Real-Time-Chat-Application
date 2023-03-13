@@ -1,4 +1,4 @@
-import { CLEAR_FAIL, CLEAR_SUCCESS, REGISTER_FAIL } from '../types/authType';
+import { CLEAR_FAIL, CLEAR_SUCCESS, LOGIN_FAIL, LOGIN_SUCCESS, REGISTER_FAIL } from '../types/authType';
 import { REGISTER_SUCCESS } from '../types/authType';
 import decodeToken from 'jwt-decode';
 // 创建状态 @kofeine 022223
@@ -63,6 +63,26 @@ export const authReducer = (state = authState, action) => {
             return {
                 ...state,
                 error: ''
+            }
+        }
+        case LOGIN_SUCCESS: {
+            return {
+                ...state,
+                successMessage: payload.successMessage,
+                error: '',
+                authenticated: true,
+                loading: false,
+                myInfo: tokenDecode(payload.token)
+            }
+        }
+        case LOGIN_FAIL: {
+            return {
+                ...state,
+                myInfo: '',
+                authenticated: false,
+                loading: false,
+                successMessage: '',
+                error: payload.error
             }
         }
     }

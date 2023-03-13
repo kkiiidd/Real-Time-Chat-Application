@@ -10,7 +10,6 @@ const fs = require('fs');
 const bcrypt = require('bcrypt');
 // 引入jsonwebtoken，使用其 sign 方法生成 token @kofeine 022023
 const jwt = require('jsonwebtoken');
-const authModel = require('../models/authModel');
 
 
 // 在 控制器 验证数据 @kofeine 2023/02/13 21:43
