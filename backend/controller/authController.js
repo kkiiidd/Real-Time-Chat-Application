@@ -96,7 +96,8 @@ module.exports.userRegister = (req, res) => {
                                 email: userCreate.email,
                                 userName: userCreate.userName,
                                 password: userCreate.password,
-                                registerTime: userCreate.createdAt
+                                registerTime: userCreate.createdAt,
+                                image: userCreate.image
 
                             }, process.env.SECRET, {
                                 expiresIn: process.env.TOKEN_EXP
@@ -175,7 +176,8 @@ module.exports.userLogin = async (req, res) => {
                         email: getUser.email,
                         userName: getUser.userName,
                         password: getUser.password,
-                        registerTime: getUser.createdAt
+                        registerTime: getUser.createdAt,
+                        image: getUser.image
 
                     }, process.env.SECRET, {
                         expiresIn: process.env.TOKEN_EXP

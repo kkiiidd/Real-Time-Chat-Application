@@ -1,0 +1,2 @@
+export const GET_FRIENDS_SUCCESS = "GET_FRIENDS_SUCCESS";
+

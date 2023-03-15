@@ -23,6 +23,7 @@ const tokenDecode = (token) => {
 let getToken = localStorage.getItem('authToken');
 if (getToken) {
     const getInfo = tokenDecode(getToken);
+    console.log('getInfo', getInfo)
     if (getInfo) {
         authState.myInfo = getInfo;
         authState.loading = false;

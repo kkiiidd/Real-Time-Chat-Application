@@ -5,10 +5,11 @@ const app = express();
 const dotenv = require('dotenv');
 const databaseConnect = require('./config/database');
 const authRouter = require('./routes/authRouter');
-
+const messengerRouter = require('./routes/messengerRouter');
 // 为了读取请求的请求体，引入bodyParser @kofeine 031123
 const bodyParser = require('body-parser');
-
+//为了读取请求的 cookie ,引入 cookie-parser;
+const cookieParser = require('cookie-parser');
 // dotenv配置 @kofeine 2023/02/09 22:50
 /*    
     dotenv在项目中的作用：将环境变量从 .env 文件加载到中 process.env
@@ -24,7 +25,9 @@ databaseConnect();
 const PORT = process.env.PORT || 5000;
 
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use('/api/chatapp', authRouter);
+app.use('/api/chatapp', messengerRouter);
 
 app.get('/', (req, res) => {
     res.send('Welcom to my RealTimeChat App')
