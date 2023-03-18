@@ -15,3 +15,29 @@ export const getFriends = async (dispatch) => {
 
     }
 }
+
+export const sendMessage = (data) => {
+    return async (dispatch) => {
+        try {
+            const response = await axios.post('api/chatapp/send-message', data);
+            // console.log('sendMessage data', data);
+            // console.log(response);
+
+        } catch (error) {
+            console.log(error.response.data)
+        }
+    }
+}
+
+export const getMessage = (currentFriendId) => {
+    return async (dispatch) => {
+        try {
+            const response = await axios.get('/api/chatapp/get-message' + currentFriendId);
+            console.log(response.data);
+
+        } catch (error) {
+            console.log(error.response.data)
+        }
+
+    }
+}
