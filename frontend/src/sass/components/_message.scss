@@ -1,7 +1,8 @@
 .message-show {
-    height: 100%;
+    height: auto;
     padding: 10px;
     overflow-y: auto;
+    flex: 1;
 
     &::-webkit-scrollbar {
         overflow: hidden;

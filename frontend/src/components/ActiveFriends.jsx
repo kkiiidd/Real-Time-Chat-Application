@@ -1,11 +1,11 @@
 import React from "react";
 
-const ActiveFriends = () => {
+const ActiveFriends = ({ user, onClick }) => {
   return (
-    <div className="active-friend">
+    <div className="active-friend" onClick={onClick}>
       <div className="image-active-icon">
         <div className="image">
-          <img src="/16562user.jpg" alt="" />
+          <img src={user.userInfo.image} alt="" />
           <div className="active-icon"></div>
         </div>
       </div>

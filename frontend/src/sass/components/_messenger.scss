@@ -58,6 +58,7 @@
 
                         .theme_logout.show {
                             transform: scale(1);
+                            z-index: 99;
                         }
 
                         .theme_logout {

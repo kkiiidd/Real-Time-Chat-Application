@@ -1,5 +1,8 @@
 .active-friends {
+
+
     .scroll-friends {
+
         overflow-x: scroll;
         display: flex;
 
@@ -9,6 +12,8 @@
         }
 
         .active-friend {
+
+
             .image-active-icon {
                 .image {
                     margin: 5px;
@@ -18,6 +23,16 @@
                         width: 38px;
                         height: 38px;
                         border-radius: 50%;
+
+
+                        &:hover {
+                            // box-shadow: 0 0 10px #017aff;
+                            opacity: 0.8;
+                            // scale: 1.2;
+                            transition: .4s all ease;
+                            cursor: pointer;
+                            // background-color: #017aff;
+                        }
                     }
 
                     .active-icon {

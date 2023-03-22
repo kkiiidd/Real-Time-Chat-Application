@@ -65,16 +65,18 @@ module.exports.userRegister = (req, res) => {
                     email: email
                 })
                 if (isEmailExist) {
+                    // 邮箱已存在，不可用 @kofeine 032023
                     res.status(404).json({
                         error: {
                             errorMessage: ['Email Already Existed']
                         }
                     })
                 } else {
+                    // 邮箱可用 @kofeine 032023
                     // console.log('not exist')
                     // 将文件从源路径异步复制到目标路径 @kofeine 2023/02/16 22:46
                     fs.copyFile(files.image.filepath, newFilePath, async (error) => {
-                        console.log('copyFile')
+                        console.log('copyFile');
                         if (!error) {
                             console.log('no error')
                             // 使用当前用户数据在 user 表中创建一条数据 @kofeine 2023/02/16 21:56
@@ -213,4 +215,20 @@ module.exports.userLogin = async (req, res) => {
     }
 
     // res.send('message from user-login controller')
+}
+module.exports.userLogout = (req, res) => {
+    try {
+        res.status(201).cookie({
+            authToken: ''
+        }).json({
+            success: true
+        })
+    } catch (error) {
+        res.status(500).json({
+            error: {
+                errorMessage: [error]
+            }
+        })
+    }
+
 }

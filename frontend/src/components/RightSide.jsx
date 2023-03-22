@@ -3,13 +3,19 @@ import { FaPhoneAlt, FaVideo, FaRocketchat } from "react-icons/fa";
 import Message from "./Message";
 import MessageSend from "./MessageSend";
 import FriendInfo from "./FriendInfo";
+import { useSelector } from "react-redux";
 
 const RightSide = ({
   currentFriend,
   inputHandle,
   currentInput,
   sendMessage,
+  scrollRef,
+  emojiHandle,
+  messageHandle,
+  typeStatus,
 }) => {
+  const { messages } = useSelector((state) => state.messenger);
   return (
     <div className="col-9">
       <div className="right-side">
@@ -24,7 +30,11 @@ const RightSide = ({
                     <div className="active-icon"></div>
                   </div>
                   <div className="name">
-                    <h3>{currentFriend.userName}</h3>
+                    {!typeStatus ? (
+                      <h3>{currentFriend.userName}</h3>
+                    ) : (
+                      <h3>Typing</h3>
+                    )}
                   </div>
                 </div>
 
@@ -45,11 +55,19 @@ const RightSide = ({
                   </div>
                 </div>
               </div>
-              <Message />
+
+              <Message
+                messages={messages}
+                currentFriend={currentFriend}
+                scrollRef={scrollRef}
+              />
+
               <MessageSend
                 inputHandle={inputHandle}
                 currentInput={currentInput}
                 sendMessage={sendMessage}
+                emojiHandle={emojiHandle}
+                messageHandle={messageHandle}
               />
             </div>
           </div>

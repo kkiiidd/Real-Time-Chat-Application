@@ -1,5 +1,5 @@
 import axios from "axios"
-import { LOGIN_FAIL, LOGIN_SUCCESS, REGISTER_FAIL, REGISTER_SUCCESS } from "../types/authType";
+import { LOGIN_FAIL, LOGIN_SUCCESS, LOGOUT_SUCCESS, REGISTER_FAIL, REGISTER_SUCCESS } from "../types/authType";
 export const userRegister = (data) => {
 
     return async (dispatch) => {
@@ -64,5 +64,20 @@ export const userLogin = (data) => {
             })
 
         }
+    }
+}
+
+export const userLogout = async (dispatch) => {
+    try {
+        const response = await axios.post('/api/chatapp/user-logout');
+        console.log(response.data);
+        if (response.data.success) {
+            dispatch({
+                type: LOGOUT_SUCCESS
+            })
+            localStorage.removeItem('authToken');
+        }
+    } catch (error) {
+        console.log(error.response.data);
     }
 }
