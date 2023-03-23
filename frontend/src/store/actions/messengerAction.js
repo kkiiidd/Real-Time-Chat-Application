@@ -12,7 +12,7 @@ export const getFriends = async (dispatch) => {
             }
         })
     } catch (error) {
-
+        console.log(error.response.data);
     }
 }
 

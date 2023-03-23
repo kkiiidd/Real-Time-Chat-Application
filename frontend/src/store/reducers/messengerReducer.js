@@ -3,6 +3,7 @@ import { GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, SEND_MESSAGE_SUCCESS, SOCKET_
 const messengerState = {
     friends: [],
     messages: [],
+    sendSuccess: false
 };
 
 const messengerReducer = (state = messengerState, action) => {
@@ -22,6 +23,7 @@ const messengerReducer = (state = messengerState, action) => {
     if (type === SEND_MESSAGE_SUCCESS) {
         return {
             ...state,
+            sendSuccess: true,
             messages: [...state.messages, payload.newMessage]
         }
     }
@@ -29,6 +31,12 @@ const messengerReducer = (state = messengerState, action) => {
         return {
             ...state,
             messages: [...state.messages, payload.message]
+        }
+    }
+    if (type === "RESET_SENDSUCCESS") {
+        return {
+            ...state,
+            sendSuccess: false
         }
     }
     return state;

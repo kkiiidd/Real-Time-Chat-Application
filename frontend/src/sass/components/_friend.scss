@@ -65,6 +65,7 @@
                     align-items: flex-start;
                     justify-content: center;
                     flex-direction: column;
+                    flex: 1;
 
                     h4.unseen_message {
                         font-weight: 700 !important;
@@ -76,6 +77,10 @@
                     }
 
                     .msg-time {
+                        display: flex;
+                        justify-content: space-between;
+                        width: 100%;
+
                         span.unseen_message {
                             font-weight: 700 !important;
                         }

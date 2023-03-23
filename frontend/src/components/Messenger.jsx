@@ -11,7 +11,13 @@ import {
   sendMessage,
 } from "../store/actions/messengerAction";
 import { useRef } from "react";
-
+// 引入 use-sound @kofeine 032323
+import useSound from "use-sound";
+// 引入吐司 @kofeine 032323
+import toast, { Toaster } from "react-hot-toast";
+// 引入音频 @kofeine 032323
+import notificationSound from "../audio/audio_notification.mp3";
+import sendSound from "../audio/audio_sending.mp3";
 // 引入 socketio @kofeine 032023
 import { io } from "socket.io-client";
 import { userLogout } from "../store/actions/authAction";
@@ -19,7 +25,8 @@ import { SOCKET_MESSAGE, SOCKET_TYPING } from "../store/types/messengerTypes";
 
 const Messenger = () => {
   const dispatch = useDispatch();
-
+  const [notificationSPlay] = useSound(notificationSound);
+  const [sendSPlay] = useSound(sendSound);
   // 当前选中的朋友 @kofeine 031723
   const [currentFriend, setCurrentFriend] = useState("");
   // 当前输入的信息 @kofeine 031723
@@ -27,13 +34,16 @@ const Messenger = () => {
 
   // 获取在线好友 @kofeine 032123
   const [activeFriends, setActiveFriends] = useState([]);
-
+  // 当前好友输入状态 @kofeine 032323
+  const [currentFriendTypeStatus, setCurrentFriendTypeStatus] = useState(false);
   // Socket 信息 @kofeine 032223
   const [socketMessage, setSocketMessage] = useState("");
   // Socket 输入状态 @kofeine 032223
   const [socketTyping, setSocketTyping] = useState(false);
   // 从 redux 中获取 reducer 中 state 的内容 @kofeine 031723
-  const { friends, messages } = useSelector((state) => state.messenger);
+  const { friends, messages, sendSuccess } = useSelector(
+    (state) => state.messenger
+  );
   const { myInfo } = useSelector((state) => state.auth);
 
   // 滚动 @kofeine 031923
@@ -45,7 +55,7 @@ const Messenger = () => {
   const [hide, setHide] = useState(true);
 
   // 计时器 @kofeine 032223
-  let interval;
+  const countdown = useRef();
   const handleSend = () => {
     // console.log(currentInput);
     const data = {
@@ -54,17 +64,17 @@ const Messenger = () => {
       message: currentInput,
     };
     dispatch(sendMessage(data));
-    socket.current.emit("sendMessage", {
-      senderId: myInfo.id,
-      senderName: myInfo.userName,
-      recieverId: currentFriend._id,
-      createAt: new Date(),
-      message: {
-        text: currentInput,
-        image: "",
-      },
-    });
-    clearInterval(interval);
+    // socket.current.emit("sendMessage", {
+    //   senderId: myInfo.id,
+    //   senderName: myInfo.userName,
+    //   recieverId: currentFriend._id,
+    //   createAt: new Date(),
+    //   message: {
+    //     text: currentInput,
+    //     image: "",
+    //   },
+    // });
+    clearTimeout(countdown.current);
     socket.current.emit("stopTyping", {
       recieverId: currentFriend._id,
       senderId: myInfo.id,
@@ -97,6 +107,11 @@ const Messenger = () => {
   const emojiHandle = (emoji) => {
     console.log(emoji);
     setCurrentInput(`${currentInput}${emoji}`);
+    socket.current.emit("isTyping", {
+      senderId: myInfo.id,
+      recieverId: currentFriend._id,
+      typeStatus: true,
+    });
   };
   // 发送图片处理函数 @kofeine 032023
   const messageHandle = (e) => {
@@ -119,15 +134,18 @@ const Messenger = () => {
     socket.current = io("ws://localhost:8000");
     // 监听新信息 @kofeine 032223
     socket.current.on("getMessage", (data) => {
-      console.log("socket get message", data);
+      // console.log("socket get message", data);
+
       setSocketMessage(data);
     });
     socket.current.on("youAreTyping", (data) => {
-      clearInterval(interval);
-      setSocketTyping(data.typeStatus);
-      interval = setInterval(() => {
-        setSocketTyping(false);
-      }, 3000);
+      // console.log("data", data, currentFriend, myInfo.id);
+      setSocketTyping(data);
+
+      // clearInterval(interval);
+      //   interval = setInterval(() => {
+      //     setSocketTyping(false);
+      //   }, 2000);
     });
     // socket.current.on("youStopTyping", (data) => {
     //   setSocketTyping(data.typeStatus);
@@ -174,6 +192,32 @@ const Messenger = () => {
       });
     }
   }, [socketMessage]);
+  // 检测 socket 输入状态，判断是否需要修改当前朋友的输入状态 @kofeine 032323
+  useEffect(() => {
+    if (
+      socketTyping.senderId === currentFriend._id &&
+      socketTyping.recieverId === myInfo.id
+    ) {
+      if (socketTyping.typeStatus) {
+        clearTimeout(countdown.current);
+        // console.log("typingggggggggggggggggggggggggg");
+        setCurrentFriendTypeStatus(true);
+        countdown.current = setTimeout(() => {
+          // console.log("stop typing");
+          setCurrentFriendTypeStatus(false);
+        }, 3000);
+      }
+    }
+  }, [socketTyping]);
+  // 播放提示音，发送方不为当前好友时 @kofeine 032323
+  useEffect(() => {
+    // 先判断发送人与接收人 @kofeine 032323
+    const { senderId, recieverId } = socketMessage;
+    if (senderId !== currentFriend._id && recieverId === myInfo.id) {
+      notificationSPlay();
+      toast.success(socketMessage.senderName + " Send You A Message");
+    }
+  }, [socketMessage]);
 
   // 获取朋友列表 @kofeine 032223
   useEffect(() => {
@@ -181,7 +225,7 @@ const Messenger = () => {
   }, []);
 
   useEffect(() => {
-    if (!currentFriend && friends.length > 0) setCurrentFriend(friends[0]);
+    if (!currentFriend && friends.length > 0) setCurrentFriend(friends[0].info);
   }, [friends]);
 
   // 获取当前好友的信息，检测 currentFriend @kofeine 031823
@@ -193,8 +237,29 @@ const Messenger = () => {
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+  // 发送成功后广播 @kofeine 032323
+  useEffect(() => {
+    if (sendSuccess) {
+      console.log("msg sent");
+      const sentMsg = messages.filter((m) => m.senderId === myInfo.id);
+      // console.log("msg sent:", sentMsg[sentMsg.length - 1]);
+      socket.current.emit("sendMessage", sentMsg[sentMsg.length - 1]);
+      dispatch({
+        type: "RESET_SENDSUCCESS",
+      });
+    }
+  }, [sendSuccess]);
   return (
     <div className="messenger">
+      <Toaster
+        position={"top-right"}
+        reverseOrder={false}
+        toastOptions={{
+          style: {
+            fontSize: "18px",
+          },
+        }}
+      />
       <div className="row">
         <div className="col-3">
           <div className="left-side">
@@ -281,13 +346,13 @@ const Messenger = () => {
                 ? friends.map((frd) => (
                     <div
                       className={
-                        currentFriend._id === frd._id
+                        currentFriend._id === frd.info._id
                           ? "hover-friend active"
                           : "hover-friend"
                       }
-                      onClick={() => setCurrentFriend(frd)}
+                      onClick={() => setCurrentFriend(frd.info)}
                     >
-                      <Friend friend={frd} key={frd._id} />
+                      <Friend friend={frd} key={frd.info._id} />
                     </div>
                   ))
                 : "No Friends"}
@@ -304,7 +369,7 @@ const Messenger = () => {
             scrollRef={scrollRef}
             emojiHandle={emojiHandle}
             messageHandle={messageHandle}
-            typeStatus={socketTyping}
+            typeStatus={currentFriendTypeStatus}
           />
         ) : (
           "Please Select A Friend"
