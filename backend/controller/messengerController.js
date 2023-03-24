@@ -43,6 +43,34 @@ const findLastMessage = async (myId, frdId) => {
 
 
 }
+// 我未读的信息 @kofeine 032423
+const findUnseenMessages = async (myId, friendId) => {
+    try {
+        const unseenMessages = await messageModel.find({
+            $and: [
+                {
+                    senderId: {
+                        $eq: friendId
+                    }
+                },
+                {
+                    recieverId: {
+                        $eq: myId
+                    }
+                }, {
+                    status: {
+                        $eq: false
+                    }
+                }
+            ]
+        })
+        return unseenMessages;
+
+    } catch (error) {
+        console.log('find unseen messages error:', error)
+        return null;
+    }
+}
 const getFriends = async (req, res) => {
     const myId = req.id;
     // console.log('myId', myId);
@@ -60,9 +88,11 @@ const getFriends = async (req, res) => {
         // console.log('friends', friends);
         for (let i = 0; i < friends.length; i++) {
             const lastMessage = await findLastMessage(myId, friends[i]._id);
+            const unseenMessages = await findUnseenMessages(myId, friends[i]._id) || [];
             console.log('lastMessage', lastMessage)
             friendsInfo = [...friendsInfo, {
                 lastMessage,
+                unseenMessages,
                 info: friends[i]
             }]
         }
@@ -190,4 +220,49 @@ module.exports.sendImage = (req, res) => {
             }
         })
     })
+}
+const unseenAll = async (allMessages) => {
+
+}
+module.exports.seenAll = async (req, res) => {
+    try {
+        const targetMessages = await findUnseenMessages(req.id, req.params.id);
+        console.log('my all unseen messages', req.id, req.params.id, targetMessages);
+        // await (targetMessages.map(async (msg) => {
+        //     await messageModel.findByIdAndUpdate(msg._id, {
+        //         status: true
+        //     })
+        // }))
+        await messageModel.find({
+            $and: [
+                {
+                    senderId: {
+                        $eq: req.params.id
+                    }
+                },
+                {
+                    recieverId: {
+                        $eq: req.id
+                    }
+                }, {
+                    status: {
+                        $eq: false
+                    }
+                }
+            ]
+        }).update({
+            status: true
+        })
+        const targetMessages2 = await findUnseenMessages(req.id, req.params.id);
+        console.log(targetMessages2)
+        res.status(201).json({
+            success: true,
+            unseenMessages: targetMessages2
+        })
+
+
+
+    } catch (error) {
+        console.log('seen All error', error)
+    }
 }

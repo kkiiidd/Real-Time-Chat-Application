@@ -7,6 +7,7 @@ const Message = ({ messages, currentFriend, scrollRef }) => {
   const { myInfo } = useSelector((state) => state.auth);
   // console.log("current Friend", currentFriend);
   // console.log(message); --> {message:{...}}
+  // console.log(messages);
   return (
     <>
       <div className="message-show">
@@ -25,11 +26,20 @@ const Message = ({ messages, currentFriend, scrollRef }) => {
                         )}
                       </p>
                       {/* 已读图标 */}
-                      <img className="img" src={currentFriend.image} alt="" />
 
-                      <span>
-                        <FaRegCheckCircle />{" "}
-                      </span>
+                      {message.status && (
+                        <>
+                          <img
+                            className="img"
+                            src={currentFriend.image}
+                            alt=""
+                          />
+
+                          <span>
+                            <FaRegCheckCircle />{" "}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="time">2023-03-14</div>

@@ -1,4 +1,4 @@
-import { GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, SEND_MESSAGE_SUCCESS, SOCKET_MESSAGE } from "../types/messengerTypes";
+import { GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, REMOVE_UNSEEN, RESET_SENDSUCCESS, SEND_MESSAGE_SUCCESS, SET_READ, SOCKET_MESSAGE, UPDATE_MESSAGE, UPDATE_UNSEEN } from "../types/messengerTypes";
 
 const messengerState = {
     friends: [],
@@ -33,7 +33,43 @@ const messengerReducer = (state = messengerState, action) => {
             messages: [...state.messages, payload.message]
         }
     }
-    if (type === "RESET_SENDSUCCESS") {
+    if (type === UPDATE_MESSAGE) {
+        const friendIndex = state.friends.findIndex(f => f.info._id === payload.sentMsg.senderId || f.info._id === payload.sentMsg.recieverId);
+        // console.log('update !!!!!!!!!!!!!!! friend', state.friends[friendIndex]);
+        state.friends[friendIndex].lastMessage = payload.sentMsg;
+        return {
+            ...state,
+
+        }
+    }
+    if (type === UPDATE_UNSEEN) {
+        const friendIndex = state.friends.findIndex(f => f.info._id === payload.sentMsg.senderId || f.info._id === payload.sentMsg.recieverId);
+        state.friends[friendIndex].unseenMessages = [...(state.friends[friendIndex].unseenMessages), payload.sentMsg];
+        return {
+            ...state,
+
+        }
+    }
+    if (type === REMOVE_UNSEEN) {
+        const friendIndex = state.friends.findIndex(f => f.info._id === payload.friendId);
+        state.friends[friendIndex].unseenMessages = payload.sentMsg;
+        return {
+            ...state,
+
+        }
+    }
+    if (type === SET_READ) {
+        state.messages.forEach((msg, index) => {
+            if (msg.recieverId === payload.friendId) state.messages[index].status = true;
+        })
+        return {
+            ...state,
+            messages: state.messages
+
+        }
+    }
+
+    if (type === RESET_SENDSUCCESS) {
         return {
             ...state,
             sendSuccess: false

@@ -3,7 +3,7 @@ import moment from "moment";
 const Friend = ({ friend }) => {
   // console.log("friend:", friend);
   const msg = friend.lastMessage;
-  console.log("lastMessage", msg);
+  // console.log("lastMessage", msg);
   return (
     <div className="friend">
       <div className="friend-image">
@@ -13,7 +13,12 @@ const Friend = ({ friend }) => {
       </div>
       <div className="friend-name-seen">
         <div className="friend-name">
-          <h4>{friend.info.userName}</h4>
+          <h4>
+            {friend.info.userName}{" "}
+            {friend.unseenMessages.length > 0 && (
+              <span>unseen:{friend.unseenMessages.length}</span>
+            )}
+          </h4>
           <div className="msg-time">
             {msg ? (
               <span>

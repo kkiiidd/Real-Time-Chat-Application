@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   getFriends,
   getMessage,
+  seenAllCurrentFriendMessages,
   sendImage,
   sendMessage,
 } from "../store/actions/messengerAction";
@@ -21,7 +22,14 @@ import sendSound from "../audio/audio_sending.mp3";
 // 引入 socketio @kofeine 032023
 import { io } from "socket.io-client";
 import { userLogout } from "../store/actions/authAction";
-import { SOCKET_MESSAGE, SOCKET_TYPING } from "../store/types/messengerTypes";
+import {
+  RESET_SENDSUCCESS,
+  SET_READ,
+  SOCKET_MESSAGE,
+  SOCKET_TYPING,
+  UPDATE_MESSAGE,
+  UPDATE_UNSEEN,
+} from "../store/types/messengerTypes";
 
 const Messenger = () => {
   const dispatch = useDispatch();
@@ -147,6 +155,15 @@ const Messenger = () => {
       //     setSocketTyping(false);
       //   }, 2000);
     });
+    socket.current.on("yourMsgHasBeenRead", (data) => {
+      // console.log("my msg has been read:", data);
+      dispatch({
+        type: SET_READ,
+        payload: {
+          friendId: data,
+        },
+      });
+    });
     // socket.current.on("youStopTyping", (data) => {
     //   setSocketTyping(data.typeStatus);
     // });
@@ -184,14 +201,30 @@ const Messenger = () => {
         recieverId,
         myInfo.id
       );
+      // 更新右侧信息 @kofeine 032423
       dispatch({
         type: SOCKET_MESSAGE,
         payload: {
           message: socketMessage,
         },
       });
+      // 接收到信息，更新朋友列表显示的信息 @kofeine 032423
+      dispatch({
+        type: UPDATE_MESSAGE,
+        payload: { sentMsg: socketMessage },
+      });
+      // 接收到信息后，更新朋友列表显示的未读信息（个数） @kofeine 032423
+      dispatch({
+        type: UPDATE_UNSEEN,
+        payload: { sentMsg: socketMessage },
+      });
+      // 发送消息的是当前打开的好友，直接设为已读 @kofeine 032423
+      dispatch(seenAllCurrentFriendMessages(currentFriend._id));
+      // 接收到信息，告诉对方已收到，设为已读 @kofeine 032423
+      socket.current.emit("haveRead", socketMessage);
     }
   }, [socketMessage]);
+
   // 检测 socket 输入状态，判断是否需要修改当前朋友的输入状态 @kofeine 032323
   useEffect(() => {
     if (
@@ -209,6 +242,7 @@ const Messenger = () => {
       }
     }
   }, [socketTyping]);
+
   // 播放提示音，发送方不为当前好友时 @kofeine 032323
   useEffect(() => {
     // 先判断发送人与接收人 @kofeine 032323
@@ -216,6 +250,16 @@ const Messenger = () => {
     if (senderId !== currentFriend._id && recieverId === myInfo.id) {
       notificationSPlay();
       toast.success(socketMessage.senderName + " Send You A Message");
+      // 接收到信息，更新朋友列表显示的信息 @kofeine 032423
+      dispatch({
+        type: UPDATE_MESSAGE,
+        payload: { sentMsg: socketMessage },
+      });
+      // 接收到信息后，更新朋友列表显示的未读信息（个数） @kofeine 032423
+      dispatch({
+        type: UPDATE_UNSEEN,
+        payload: { sentMsg: socketMessage },
+      });
     }
   }, [socketMessage]);
 
@@ -228,9 +272,12 @@ const Messenger = () => {
     if (!currentFriend && friends.length > 0) setCurrentFriend(friends[0].info);
   }, [friends]);
 
-  // 获取当前好友的信息，检测 currentFriend @kofeine 031823
+  // 监听是否在切换当前好友，获取当前好友的信息，检测 currentFriend @kofeine 031823
   useEffect(() => {
     dispatch(getMessage(currentFriend._id));
+    dispatch(seenAllCurrentFriendMessages(currentFriend._id));
+    // 接收到信息，告诉对方已收到，设为已读 @kofeine 032423
+    socket.current.emit("haveRead", socketMessage);
   }, [currentFriend?._id]); // 有的话检测其 _id 值 @kofeine 031823
 
   // 检测信息，然后滚动 @kofeine 031923
@@ -241,11 +288,17 @@ const Messenger = () => {
   useEffect(() => {
     if (sendSuccess) {
       console.log("msg sent");
-      const sentMsg = messages.filter((m) => m.senderId === myInfo.id);
+      // const sentMsgs = messages.filter((m) => m.senderId === myInfo.id);
       // console.log("msg sent:", sentMsg[sentMsg.length - 1]);
-      socket.current.emit("sendMessage", sentMsg[sentMsg.length - 1]);
+      socket.current.emit("sendMessage", messages[messages.length - 1]);
+      // 发送信息后，更新朋友列表显示的最新信息 @kofeine 032423
       dispatch({
-        type: "RESET_SENDSUCCESS",
+        type: UPDATE_MESSAGE,
+        payload: { sentMsg: messages[messages.length - 1] },
+      });
+
+      dispatch({
+        type: RESET_SENDSUCCESS,
       });
     }
   }, [sendSuccess]);

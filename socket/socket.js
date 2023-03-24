@@ -57,5 +57,14 @@ io.on('connection', (socket) => {
         }
     })
 
+    socket.on('haveRead', data => {
+        // console.log(data);
+        const targetFriend = findFriend(data.senderId);
+        // console.log(targetFriend);
+        if (targetFriend) {
+            socket.to(targetFriend.socketId).emit('yourMsgHasBeenRead', data.recieverId);//
+
+        }
+    })
 
 })

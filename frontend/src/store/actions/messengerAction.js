@@ -1,10 +1,11 @@
 import axios from "axios";
-import { GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, SEND_MESSAGE_SUCCESS } from "../types/messengerTypes";
+import { GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, REMOVE_UNSEEN, SEND_MESSAGE_SUCCESS, UPDATE_MESSAGE, UPDATE_UNSEEN } from "../types/messengerTypes";
 
 export const getFriends = async (dispatch) => {
     console.log('get Friends')
     try {
         const response = await axios.get('/api/chatapp/get-friends');
+        console.log('get friend response', response.data)
         dispatch({
             type: GET_FRIENDS_SUCCESS,
             payload: {
@@ -77,6 +78,23 @@ export const sendImage = (formData) => {
 
         } catch (error) {
             console.log(error.response.data);
+        }
+    }
+}
+export const seenAllCurrentFriendMessages = (friendId) => {
+    return async (dispatch) => {
+        try {
+            const response = await axios.post('/api/chatapp/seen-all/' + friendId);
+            console.log('seen all response', response.data);
+            dispatch({
+                type: REMOVE_UNSEEN,
+                payload: {
+                    friendId,
+                    sentMsg: response.data.unseenMessages
+                }
+            })
+        } catch (error) {
+            console.log('seen all error:', error)
         }
     }
 }
