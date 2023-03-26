@@ -7,9 +7,11 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   getFriends,
   getMessage,
+  getTheme,
   seenAllCurrentFriendMessages,
   sendImage,
   sendMessage,
+  setTheme,
 } from "../store/actions/messengerAction";
 import { useRef } from "react";
 // 引入 use-sound @kofeine 032323
@@ -30,6 +32,8 @@ import {
   UPDATE_MESSAGE,
   UPDATE_UNSEEN,
 } from "../store/types/messengerTypes";
+import { AddFriend } from "./AddFriend";
+import { Switch, Route, Routes, NavLink, Outlet, Link } from "react-router-dom";
 
 const Messenger = () => {
   const dispatch = useDispatch();
@@ -49,7 +53,7 @@ const Messenger = () => {
   // Socket 输入状态 @kofeine 032223
   const [socketTyping, setSocketTyping] = useState(false);
   // 从 redux 中获取 reducer 中 state 的内容 @kofeine 031723
-  const { friends, messages, sendSuccess } = useSelector(
+  const { friends, messages, sendSuccess, theme } = useSelector(
     (state) => state.messenger
   );
   const { myInfo } = useSelector((state) => state.auth);
@@ -112,6 +116,7 @@ const Messenger = () => {
     //   clearInterval(interval);
     // });
   };
+  // 添加表情 @kofeine 032623
   const emojiHandle = (emoji) => {
     console.log(emoji);
     setCurrentInput(`${currentInput}${emoji}`);
@@ -133,6 +138,24 @@ const Messenger = () => {
     dispatch(sendImage(formData));
   };
 
+  // 搜索朋友 @kofeine 032623
+  const searchFriend = (strContained) => {
+    const friendNameList = document.querySelectorAll(
+      ".friends .hover-friend .friend .friend-name-seen .friend-name h4"
+    );
+    const friendItems = document.querySelectorAll(".friends .hover-friend");
+    friendNameList.forEach((friendName, index) => {
+      console.log("friend name:", friendName.innerHTML);
+      if (
+        friendName.innerHTML.toLowerCase().indexOf(strContained.toLowerCase()) >
+        -1
+      ) {
+        friendItems[index].style.display = "";
+      } else {
+        friendItems[index].style.display = "none";
+      }
+    });
+  };
   const logout = () => {
     dispatch(userLogout);
   };
@@ -176,7 +199,7 @@ const Messenger = () => {
 
   // 获取在线好友 @kofeine 032123
   useEffect(() => {
-    socket.current.on("getUser", (users) => {
+    socket.current.on("getActiveUser", (users) => {
       console.log(users);
       setActiveFriends(users);
     });
@@ -267,7 +290,10 @@ const Messenger = () => {
   useEffect(() => {
     dispatch(getFriends);
   }, []);
-
+  // 获取本地存储的主题 @kofeine 032623
+  useEffect(() => {
+    dispatch(getTheme);
+  }, []);
   useEffect(() => {
     if (!currentFriend && friends.length > 0) setCurrentFriend(friends[0].info);
   }, [friends]);
@@ -303,7 +329,7 @@ const Messenger = () => {
     }
   }, [sendSuccess]);
   return (
-    <div className="messenger">
+    <div className={theme === "dark" ? "messenger theme" : "messenger"}>
       <Toaster
         position={"top-right"}
         reverseOrder={false}
@@ -333,22 +359,24 @@ const Messenger = () => {
                     <div className="on">
                       <label htmlFor="dark">ON</label>
                       <input
-                        // onChange={(e) => dispatch(themeSet(e.target.value))}
+                        onChange={(e) => dispatch(setTheme(e.target.value))}
                         type="radio"
                         value="dark"
                         name="theme"
                         id="dark"
+                        checked={theme === "dark"}
                       />
                     </div>
 
                     <div className="of">
                       <label htmlFor="white">OFF</label>
                       <input
-                        // onChange={(e) => dispatch(themeSet(e.target.value))}
+                        onChange={(e) => dispatch(setTheme(e.target.value))}
                         type="radio"
-                        value="white"
+                        value="light"
                         name="theme"
-                        id="white"
+                        id="light"
+                        checked={theme === "light"}
                       />
                     </div>
 
@@ -372,8 +400,13 @@ const Messenger = () => {
                   type="text"
                   placeholder="Search"
                   className="form-control"
+                  onChange={(e) => searchFriend(e.target.value)}
                 />
               </div>
+              <nav>
+                <Link to="/addfriend">Add Friend</Link>
+                <Link to="/rightside">Message</Link>
+              </nav>
             </div>
             <div className="active-friends">
               <div className="scroll-friends">
@@ -405,28 +438,42 @@ const Messenger = () => {
                       }
                       onClick={() => setCurrentFriend(frd.info)}
                     >
-                      <Friend friend={frd} key={frd.info._id} />
+                      <Friend
+                        friend={frd}
+                        key={frd.info._id}
+                        activeFriends={activeFriends}
+                      />
                     </div>
                   ))
                 : "No Friends"}
             </div>
           </div>
         </div>
-        {currentFriend ? (
-          <RightSide
-            messages={messages}
-            currentFriend={currentFriend}
-            currentInput={currentInput}
-            inputHandle={inputHandle}
-            sendMessage={handleSend}
-            scrollRef={scrollRef}
-            emojiHandle={emojiHandle}
-            messageHandle={messageHandle}
-            typeStatus={currentFriendTypeStatus}
-          />
-        ) : (
-          "Please Select A Friend"
-        )}
+
+        <Routes path="/">
+          <Route
+            element={
+              currentFriend ? (
+                <RightSide
+                  messages={messages}
+                  currentFriend={currentFriend}
+                  currentInput={currentInput}
+                  inputHandle={inputHandle}
+                  sendMessage={handleSend}
+                  scrollRef={scrollRef}
+                  emojiHandle={emojiHandle}
+                  messageHandle={messageHandle}
+                  typeStatus={currentFriendTypeStatus}
+                />
+              ) : (
+                <div>"Please Select A Friend"</div>
+              )
+            }
+            path="rightside"
+          ></Route>
+          <Route element={<AddFriend />} path="addfriend"></Route>
+        </Routes>
+        <Outlet />
       </div>
     </div>
   );

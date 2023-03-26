@@ -1,5 +1,5 @@
 import axios from "axios";
-import { GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, REMOVE_UNSEEN, SEND_MESSAGE_SUCCESS, UPDATE_MESSAGE, UPDATE_UNSEEN } from "../types/messengerTypes";
+import { GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, GET_THEME_SUCCESS, REMOVE_UNSEEN, SEARCH_FRIEND_ERROR, SEARCH_FRIEND_NOT_FOUND, SEARCH_FRIEND_SUCCESS, SEND_MESSAGE_SUCCESS, SET_THEME_SUCCESS, UPDATE_MESSAGE, UPDATE_UNSEEN } from "../types/messengerTypes";
 
 export const getFriends = async (dispatch) => {
     console.log('get Friends')
@@ -98,9 +98,62 @@ export const seenAllCurrentFriendMessages = (friendId) => {
         }
     }
 }
-
-export const themeSet = (value) => {
+export const getTheme = (dispatch) => {
+    const theme = localStorage.getItem('theme') || 'light';
+    dispatch({
+        type: GET_THEME_SUCCESS,
+        payload: {
+            theme
+        }
+    })
+}
+export const setTheme = (theme) => {
     return (dispatch) => {
+        localStorage.setItem('theme', theme);
+        console.log('set theme ', theme)
+        dispatch({
+            type: SET_THEME_SUCCESS,
+            payload: {
+                theme: localStorage.getItem('theme') || 'light'
+            }
+        })
+    }
+}
+
+export const getTargetUser = (email) => {
+    return async (dispatch) => {
+        try {
+            const response = await axios.get('/api/chatapp/get-target-user/' + email);
+            // console.log('get target response', response.data);
+
+            dispatch({
+                type: SEARCH_FRIEND_SUCCESS,
+                payload: {
+                    targetUser: response.data.targetUser,
+                    msg: 'found'
+                }
+            })
+
+        } catch (error) {
+            if (error.response.data.error.code === 400) {
+                dispatch({
+                    type: SEARCH_FRIEND_NOT_FOUND,
+                    payload: {
+                        msg: 'notfound'
+                    }
+                })
+            } else {
+                dispatch({
+                    type: SEARCH_FRIEND_ERROR,
+                    payload: {
+                        msg: 'servererror'
+                    }
+                })
+
+            }
+            console.log('get target error', error.response.data.error);
+
+        }
 
     }
 }

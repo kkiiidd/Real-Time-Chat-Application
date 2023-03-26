@@ -1,7 +1,7 @@
 import React from "react";
 import { FaCaretSquareDown, FaEdit, FaSistrix } from "react-icons/fa";
 
-const FriendInfo = ({ currentFriend }) => {
+const FriendInfo = ({ currentFriend, addFriend }) => {
   return (
     <div className="friend-info">
       <input type="checkbox" id="gallery" />
@@ -40,6 +40,8 @@ const FriendInfo = ({ currentFriend }) => {
       <div className="gallery">
         <img src="/35315user.jpg" />
       </div>
+
+      {addFriend && <button> Add Friend</button>}
     </div>
   );
 };

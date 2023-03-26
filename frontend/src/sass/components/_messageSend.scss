@@ -71,17 +71,23 @@
         display: flex;
         width: 70%;
         height: 40px;
-        background-color: #dfdfdf;
+        background-color: #dfdfdf36;
         border-radius: 50px;
         border: none;
         align-items: center;
+        justify-content: space-between;
+
 
         .form-control {
-            width: 100%;
+            // width: 100%;
             border-bottom-left-radius: 50px;
             border-top-left-radius: 50px;
             background-color: transparent;
             border: none;
+            padding-left: 15px;
+            flex: 1;
+
+            color: var(--text-color);
 
             &::placeholder {
                 color: var(--text-color);

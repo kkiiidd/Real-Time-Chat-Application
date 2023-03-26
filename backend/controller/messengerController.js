@@ -1,6 +1,7 @@
 const messageModel = require('../models/messengerModel');
 const formidable = require('formidable');
 const fs = require('fs');
+const authModel = require('../models/authModel');
 const findLastMessage = async (myId, frdId) => {
     try {
         const lastMessage = await messageModel.findOne({
@@ -30,7 +31,7 @@ const findLastMessage = async (myId, frdId) => {
             }]
 
         }).sort({
-            updatedAt: -1
+            createdAt: -1
         })
         // console.log('last message', lastMessage)
         return lastMessage;
@@ -221,9 +222,7 @@ module.exports.sendImage = (req, res) => {
         })
     })
 }
-const unseenAll = async (allMessages) => {
 
-}
 module.exports.seenAll = async (req, res) => {
     try {
         const targetMessages = await findUnseenMessages(req.id, req.params.id);
@@ -264,5 +263,39 @@ module.exports.seenAll = async (req, res) => {
 
     } catch (error) {
         console.log('seen All error', error)
+    }
+}
+module.exports.getTargetUser = async (req, res) => {
+    console.log('target email', req.params.email);
+    try {
+        const targetUser = await authModel.findOne({
+            email: req.params.email
+        })
+        if (targetUser) {
+            const { userName, email, image, _id } = targetUser;
+            res.status(201).json({
+                success: true,
+                targetUser: {
+                    userName, email, image, _id
+                }
+            })
+        }
+        else {
+            res.status(400).json({
+                error: {
+                    code: 400,
+                    errorMessage: 'target user not found'
+                }
+            })
+        }
+    } catch (error) {
+
+        console.log('model find target user error', error);
+        res.status(500).json({
+            error: {
+                code: 500,
+                errorMessage: "Internal Server Error"
+            }
+        })
     }
 }

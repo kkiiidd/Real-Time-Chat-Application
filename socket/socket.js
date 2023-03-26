@@ -28,7 +28,7 @@ io.on('connection', (socket) => {
     socket.on('addUser', (userId, userInfo) => {
         addUser(socket.id, userId, userInfo);
         // console.log(users);
-        io.emit('getUser', users);
+        io.emit('getActiveUser', users);
     })
     socket.on('disconnect', () => {
         removeUser(socket.id);

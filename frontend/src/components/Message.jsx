@@ -1,7 +1,7 @@
 import moment from "moment";
 import React from "react";
 import { useSelector } from "react-redux";
-import { FaRegCheckCircle } from "react-icons/fa";
+import { FaRegCheckCircle, FaMinus, FaCheck } from "react-icons/fa";
 
 const Message = ({ messages, currentFriend, scrollRef }) => {
   const { myInfo } = useSelector((state) => state.auth);
@@ -27,22 +27,35 @@ const Message = ({ messages, currentFriend, scrollRef }) => {
                       </p>
                       {/* 已读图标 */}
 
-                      {message.status && (
+                      {message.status ? (
                         <>
-                          <img
+                          {/* <img
                             className="img"
                             src={currentFriend.image}
                             alt=""
-                          />
+                          /> */}
 
                           <span>
-                            <FaRegCheckCircle />{" "}
+                            <FaCheck color={"lightgrey"} />{" "}
                           </span>
                         </>
+                      ) : (
+                        <span>
+                          <FaMinus />{" "}
+                        </span>
                       )}
                     </div>
                   </div>
-                  <div className="time">2023-03-14</div>
+                  <div className="time">
+                    {moment(message.createdAt).calendar(moment(), {
+                      sameDay: "HH:mm",
+                      nextDay: "[明天]",
+                      nextWeek: "dddd",
+                      lastDay: "[昨天] HH:mm",
+                      lastWeek: "YYYY-MM-DD HH:mm",
+                      sameElse: "YYYY-MM-DD HH:mm",
+                    })}
+                  </div>
                 </div>
               ) : (
                 <div className="fd-message" scrollRef={scrollRef}>
@@ -59,7 +72,16 @@ const Message = ({ messages, currentFriend, scrollRef }) => {
                           )}
                         </p>
                       </div>
-                      <div className="time">time</div>
+                      <div className="time">
+                        {moment(message.createdAt).calendar(moment(), {
+                          sameDay: "HH:mm",
+                          nextDay: "[明天]",
+                          nextWeek: "dddd",
+                          lastDay: "[昨天] HH:mm",
+                          lastWeek: "YYYY-MM-DD HH:mm",
+                          sameElse: "YYYY-MM-DD HH:mm",
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>

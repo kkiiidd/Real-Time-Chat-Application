@@ -1,9 +1,11 @@
-import { GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, REMOVE_UNSEEN, RESET_SENDSUCCESS, SEND_MESSAGE_SUCCESS, SET_READ, SOCKET_MESSAGE, UPDATE_MESSAGE, UPDATE_UNSEEN } from "../types/messengerTypes";
+import { GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, GET_THEME_SUCCESS, REMOVE_UNSEEN, RESET_SENDSUCCESS, SEARCH_FRIEND_ERROR, SEARCH_FRIEND_NOT_FOUND, SEARCH_FRIEND_SUCCESS, SEND_MESSAGE_SUCCESS, SET_READ, SET_THEME_SUCCESS, SOCKET_MESSAGE, UPDATE_MESSAGE, UPDATE_UNSEEN } from "../types/messengerTypes";
 
 const messengerState = {
     friends: [],
     messages: [],
-    sendSuccess: false
+    sendSuccess: false,
+    theme: 'light',
+    targetUser: {}
 };
 
 const messengerReducer = (state = messengerState, action) => {
@@ -73,6 +75,25 @@ const messengerReducer = (state = messengerState, action) => {
         return {
             ...state,
             sendSuccess: false
+        }
+    }
+    if (type === SEARCH_FRIEND_SUCCESS) {
+        return {
+            ...state,
+            targetUser: { info: payload.targetUser, result: payload.msg }
+        }
+    }
+    if (type === SEARCH_FRIEND_NOT_FOUND || type === SEARCH_FRIEND_ERROR) {
+        console.log(payload)
+        return {
+            ...state,
+            targetUser: { info: {}, result: payload.msg }
+        }
+    }
+    if (type === SET_THEME_SUCCESS || type === GET_THEME_SUCCESS) {
+        return {
+            ...state,
+            theme: payload.theme
         }
     }
     return state;
