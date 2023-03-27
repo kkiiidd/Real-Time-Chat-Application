@@ -2,6 +2,8 @@ const messageModel = require('../models/messengerModel');
 const formidable = require('formidable');
 const fs = require('fs');
 const authModel = require('../models/authModel');
+const requestModel = require('../models/requestModel');
+const friendModel = require('../models/friendModel');
 const findLastMessage = async (myId, frdId) => {
     try {
         const lastMessage = await messageModel.findOne({
@@ -291,6 +293,105 @@ module.exports.getTargetUser = async (req, res) => {
     } catch (error) {
 
         console.log('model find target user error', error);
+        res.status(500).json({
+            error: {
+                code: 500,
+                errorMessage: "Internal Server Error"
+            }
+        })
+    }
+}
+
+module.exports.addRequest = async (req, res) => {
+    try {
+        const { myInfo, targetUser, intro } = req.body;
+        if (!intro) {
+            res.status(400).json({
+                error: {
+                    errorMessage: 'Please enter Inroduction'
+                }
+            })
+        } else {
+            const newRequest = await requestModel.create({
+                senderName: myInfo.userName,
+                senderId: myInfo.id,
+                senderImage: myInfo.image,
+                recieverId: targetUser.info._id,
+                recieverName: targetUser.info.userName,
+                recieverImage: targetUser.info.image,
+                introduction: intro,
+                status: 'pending'
+            })
+            res.status(201).json({
+                success: true,
+                request: newRequest
+            })
+
+        }
+
+        // console.log('recieverId', req.body);
+        // res.status(201).json({
+        //     reqbody: req.body
+        // });
+    } catch (error) {
+        res.status(500).json({
+            error: {
+                code: 500,
+                errorMessage: "Internal Server Error"
+            }
+        })
+    }
+}
+module.exports.getRequest = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const allRequests = await requestModel.find({
+            $or: [
+                {
+                    senderId: {
+                        $eq: id
+                    }
+                },
+                {
+                    recieverId: {
+                        $eq: id
+                    }
+                }
+            ]
+        }).sort({
+            createdAt: -1
+        })
+        res.status(201).json({
+            succes: true,
+            allRequests
+        })
+        // console.log('allRequest', id, allRequest);
+    } catch (error) {
+        res.status(500).json({
+            error: {
+                code: 500,
+                errorMessage: "Internal Server Error"
+            }
+        })
+    }
+}
+
+module.exports.addFriend = async (req, res) => {
+    const { reqId, myId, friendId } = req.body;
+    try {
+        console.log('add friend', reqId, myId, friendId);
+        await requestModel.findByIdAndUpdate(reqId, {
+            status: 'accept'
+        })
+        const isMeExist = await friendModel.findById(myId);
+        if (isMeExist) {
+            const friendList = await friendModel.findByIdAndUpdate({
+
+            })
+
+        }
+
+    } catch (error) {
         res.status(500).json({
             error: {
                 code: 500,

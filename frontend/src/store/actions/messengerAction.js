@@ -1,5 +1,5 @@
 import axios from "axios";
-import { GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, GET_THEME_SUCCESS, REMOVE_UNSEEN, SEARCH_FRIEND_ERROR, SEARCH_FRIEND_NOT_FOUND, SEARCH_FRIEND_SUCCESS, SEND_MESSAGE_SUCCESS, SET_THEME_SUCCESS, UPDATE_MESSAGE, UPDATE_UNSEEN } from "../types/messengerTypes";
+import { ADD_REQUEST_FAIL, ADD_REQUEST_SUCCESS, GET_ALL_REQUESTS_SUCCESS, GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, GET_THEME_SUCCESS, REMOVE_UNSEEN, SEARCH_FRIEND_ERROR, SEARCH_FRIEND_NOT_FOUND, SEARCH_FRIEND_SUCCESS, SEND_MESSAGE_SUCCESS, SET_THEME_SUCCESS, UPDATE_MESSAGE, UPDATE_UNSEEN } from "../types/messengerTypes";
 
 export const getFriends = async (dispatch) => {
     console.log('get Friends')
@@ -153,6 +153,72 @@ export const getTargetUser = (email) => {
             }
             console.log('get target error', error.response.data.error);
 
+        }
+
+    }
+}
+
+export const addRequest = (targetUser, myInfo, intro) => {
+    return async (dispatch) => {
+        try {
+            const data = {
+                targetUser,
+                myInfo,
+                intro
+            }
+            console.log('data', data)
+            const response = await axios.post('/api/chatapp/add-request', data);
+            // console.log('add request response:', response.data); request
+            dispatch({
+                type: ADD_REQUEST_SUCCESS,
+                payload: {
+                    request: response.data.request
+                }
+            })
+
+        } catch (error) {
+            dispatch({
+                type: ADD_REQUEST_FAIL,
+                payload: {
+                    error: error.response.data.error
+                }
+            })
+            console.log('add request error:', error.response.data);
+
+        }
+
+    }
+}
+export const getAllRequest = (id) => {
+    return async (dispatch) => {
+        try {
+            const response = await axios.get('/api/chatapp/get-request/' + id);
+            console.log('get request response:', response.data);
+            if (response.data.allRequests.length > 0) {
+                dispatch({
+                    type: GET_ALL_REQUESTS_SUCCESS,
+                    payload: {
+                        allRequests: response.data.allRequests
+                    }
+                })
+            }
+        } catch (error) {
+
+            console.log('add request error:', error.response.data);
+        }
+    }
+}
+
+
+export const acceptAddFriend = (reqId, myId, friendId) => {
+    return async (dispatch) => {
+        try {
+            const response = await axios.post('/api/chatapp/add-friend', {
+                reqId, myId, friendId
+            })
+            console.log(response.data);
+        } catch (error) {
+            console.log('add request error:', error.response.data);
         }
 
     }

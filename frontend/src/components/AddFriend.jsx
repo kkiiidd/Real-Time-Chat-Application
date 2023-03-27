@@ -1,29 +1,136 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getTargetUser } from "../store/actions/messengerAction";
+import {
+  acceptAddFriend,
+  addRequest,
+  getAllRequest,
+  getTargetUser,
+} from "../store/actions/messengerAction";
 import FriendInfo from "./FriendInfo";
+import { useEffect } from "react";
+import { useAlert } from "react-alert";
 
-export const AddFriend = () => {
+import ListSubheader from "@mui/material/ListSubheader";
+import List from "@mui/material/List";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Avatar from "@mui/material/Avatar";
+import { Button } from "@mui/material";
+// import SendIcon from "@mui/icons-material/Send";
+
+export const AddFriend = ({ socket }) => {
+  const alert = useAlert();
   const [targetEmail, setTargetEmail] = useState("");
   const dispatch = useDispatch();
-  const { targetUser } = useSelector((state) => state.messenger);
+  const { targetUser, requests, addError, addSuccess } = useSelector(
+    (state) => state.messenger
+  );
+  const { myInfo } = useSelector((state) => state.auth);
   const searchUser = (email) => {
     dispatch(getTargetUser(email));
   };
-  const addFriend = () => {};
-  console.log("target user", targetUser);
+  const addFriend = (intro) => {
+    dispatch(addRequest(targetUser, myInfo, intro));
+  };
+
+  // 通过邀请 @kofeine 032723
+  const acceptAdd = (reqId, myId, friendId) => {
+    dispatch(acceptAddFriend(reqId, myId, friendId));
+  };
+  // 获取添加好友邀请信息  @kofeine 032723
+  useEffect(() => {
+    dispatch(getAllRequest(myInfo.id));
+  }, []);
+
+  useEffect(() => {
+    // 添加好友邀请失败 @kofeine 032723
+    if (addError) alert.error(addError.errorMessage);
+    // 添加好友邀请成功 @kofeine 032723
+    else if (addSuccess) {
+      alert.success(addSuccess);
+      socket.current.emit("addFriend", {
+        request: requests.filter((r) => r.senderId === myInfo.id)[0],
+      });
+    }
+    // console.log(addError);
+  }, [addError, addSuccess]);
+  // console.log("target user", targetUser);
   return (
     <div className="col-9">
-      <div className="add-friend">
-        <input
-          type="text"
-          name=""
-          id=""
-          onChange={(e) => setTargetEmail(e.target.value)}
-          value={targetEmail}
-        />
-        <button onClick={() => searchUser(targetEmail)}>search</button>
+      <div className="row">
+        <div className="col-8">
+          <div className="add-friend">
+            <input
+              type="text"
+              name=""
+              id=""
+              onChange={(e) => setTargetEmail(e.target.value)}
+              value={targetEmail}
+            />
+            <button onClick={() => searchUser(targetEmail)}>search</button>
+          </div>
+          <div className="requests-list">
+            {/* {requests.length>0 ? requests.map(rq=><div className="request-item">
+              <div className="image"><img src={rq.image} alt="" /></div>
+              <div className="name">{rq.userName}</div>
+            </div>)} */}
 
+            <List
+              sx={{
+                width: "100%",
+                height: "100%",
+                bgcolor: "background.paper",
+              }}
+              component="nav"
+              aria-labelledby="nested-list-subheader"
+              subheader={
+                <ListSubheader component="div" id="nested-list-subheader">
+                  New Friend
+                </ListSubheader>
+              }
+            >
+              {requests.length > 0
+                ? requests.map((rq) => (
+                    <div className="request-item" key={rq._id}>
+                      {rq.senderId !== myInfo.id ? (
+                        <ListItemButton>
+                          <ListItemIcon>
+                            <Avatar alt="Remy Sharp" src={rq.senderImage} />
+                          </ListItemIcon>
+                          <ListItemText primary={rq.senderName} />
+                          <Button
+                            variant="contained"
+                            onCLick={() =>
+                              acceptAdd(rq._id, rq.recieverId, rq.senderId)
+                            }
+                          >
+                            Accept
+                          </Button>
+                        </ListItemButton>
+                      ) : (
+                        <ListItemButton>
+                          <ListItemIcon>
+                            <Avatar alt="Remy Sharp" src={rq.recieverImage} />
+                          </ListItemIcon>
+                          <ListItemText primary={rq.recieverName} />
+                        </ListItemButton>
+                        // <>
+                        //   <img
+                        //     src={rq.recieverImage}
+                        //     width="100px"
+                        //     height="100px"
+                        //     alt=""
+                        //   />
+                        //   <span>{rq.recieverName}</span>
+                        // </>
+                      )}
+                    </div>
+                  ))
+                : "Nothing Yet."}
+            </List>
+          </div>
+        </div>
         <div className="col-4">
           {!targetUser.result ? (
             ""
@@ -35,7 +142,6 @@ export const AddFriend = () => {
             "Server Error"
           )}
         </div>
-        <div className="target-info"></div>
       </div>
     </div>
   );

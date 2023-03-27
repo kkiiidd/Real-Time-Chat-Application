@@ -62,7 +62,16 @@ io.on('connection', (socket) => {
         const targetFriend = findFriend(data.senderId);
         // console.log(targetFriend);
         if (targetFriend) {
-            socket.to(targetFriend.socketId).emit('yourMsgHasBeenRead', data.recieverId);//
+            socket.to(targetFriend.socketId).emit('yourMsgHasBeenRead', data.recieverId);
+
+        }
+    })
+    socket.on('addFriend', data => {
+        console.log('add friend data:', data);
+        const targetFriend = findFriend(data.request.recieverId);
+        console.log(users, targetFriend);
+        if (targetFriend) {
+            socket.to(targetFriend.socketId).emit('someoneAddYou', data.request);
 
         }
     })

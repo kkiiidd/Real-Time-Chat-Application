@@ -1,11 +1,14 @@
-import { GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, GET_THEME_SUCCESS, REMOVE_UNSEEN, RESET_SENDSUCCESS, SEARCH_FRIEND_ERROR, SEARCH_FRIEND_NOT_FOUND, SEARCH_FRIEND_SUCCESS, SEND_MESSAGE_SUCCESS, SET_READ, SET_THEME_SUCCESS, SOCKET_MESSAGE, UPDATE_MESSAGE, UPDATE_UNSEEN } from "../types/messengerTypes";
+import { ADD_REQUEST_FAIL, ADD_REQUEST_SUCCESS, GET_ALL_REQUESTS_SUCCESS, GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, GET_THEME_SUCCESS, REMOVE_UNSEEN, RESET_SENDSUCCESS, SEARCH_FRIEND_ERROR, SEARCH_FRIEND_NOT_FOUND, SEARCH_FRIEND_SUCCESS, SEND_MESSAGE_SUCCESS, SET_READ, SET_THEME_SUCCESS, SOCKET_MESSAGE, UPDATE_MESSAGE, UPDATE_REQUESTS, UPDATE_UNSEEN } from "../types/messengerTypes";
 
 const messengerState = {
     friends: [],
     messages: [],
     sendSuccess: false,
     theme: 'light',
-    targetUser: {}
+    targetUser: {},
+    requests: [],
+    addError: '',
+    addSuccess: ''
 };
 
 const messengerReducer = (state = messengerState, action) => {
@@ -81,6 +84,33 @@ const messengerReducer = (state = messengerState, action) => {
         return {
             ...state,
             targetUser: { info: payload.targetUser, result: payload.msg }
+        }
+    }
+    if (type === ADD_REQUEST_FAIL) {
+        return {
+            ...state,
+            addError: payload.error,
+            addSuccess: ''
+        }
+    }
+    if (type === ADD_REQUEST_SUCCESS) {
+        return {
+            ...state,
+            requests: [payload.request, ...state.requests],
+            addError: '',
+            addSuccess: 'Request Sent'
+        }
+    }
+    if (type === GET_ALL_REQUESTS_SUCCESS) {
+        return {
+            ...state,
+            requests: payload.allRequests
+        }
+    }
+    if (type === UPDATE_REQUESTS) {
+        return {
+            ...state,
+            requests: [payload.request, ...state.requests]
         }
     }
     if (type === SEARCH_FRIEND_NOT_FOUND || type === SEARCH_FRIEND_ERROR) {

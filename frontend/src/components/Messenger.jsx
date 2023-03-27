@@ -30,6 +30,7 @@ import {
   SOCKET_MESSAGE,
   SOCKET_TYPING,
   UPDATE_MESSAGE,
+  UPDATE_REQUESTS,
   UPDATE_UNSEEN,
 } from "../store/types/messengerTypes";
 import { AddFriend } from "./AddFriend";
@@ -52,8 +53,10 @@ const Messenger = () => {
   const [socketMessage, setSocketMessage] = useState("");
   // Socket 输入状态 @kofeine 032223
   const [socketTyping, setSocketTyping] = useState(false);
+  // socket 好友邀请状态 @kofeine 032723
+  const [socketFriendAdd, setSocketFriendAdd] = useState("");
   // 从 redux 中获取 reducer 中 state 的内容 @kofeine 031723
-  const { friends, messages, sendSuccess, theme } = useSelector(
+  const { friends, messages, sendSuccess, theme, requests } = useSelector(
     (state) => state.messenger
   );
   const { myInfo } = useSelector((state) => state.auth);
@@ -190,6 +193,12 @@ const Messenger = () => {
     // socket.current.on("youStopTyping", (data) => {
     //   setSocketTyping(data.typeStatus);
     // });
+
+    // 收到好友添加邀请 @kofeine 032723
+    socket.current.on("someoneAddYou", (data) => {
+      console.log("someone add me", data);
+      setSocketFriendAdd(data);
+    });
   }, []);
 
   // 加入聊天室 @kofeine 032123
@@ -212,6 +221,7 @@ const Messenger = () => {
       setActiveFriends(users);
     });
   }, []);
+
   // socket 广播的信息，修改 store 的数据 @kofeine 032223
   useEffect(() => {
     // 先判断发送人与接收人 @kofeine 032223
@@ -266,6 +276,18 @@ const Messenger = () => {
     }
   }, [socketTyping]);
 
+  // 有人向我添加好友 @kofeine 032723
+  useEffect(() => {
+    console.log("someone add me");
+    if (socketFriendAdd) {
+      dispatch({
+        type: UPDATE_REQUESTS,
+        payload: {
+          request: socketFriendAdd,
+        },
+      });
+    }
+  }, [socketFriendAdd]);
   // 播放提示音，发送方不为当前好友时 @kofeine 032323
   useEffect(() => {
     // 先判断发送人与接收人 @kofeine 032323
@@ -471,7 +493,10 @@ const Messenger = () => {
             }
             path="rightside"
           ></Route>
-          <Route element={<AddFriend />} path="addfriend"></Route>
+          <Route
+            element={<AddFriend socket={socket} />}
+            path="addfriend"
+          ></Route>
         </Routes>
         <Outlet />
       </div>
