@@ -1,4 +1,5 @@
-import axios from "axios"
+// import axios from "axios"
+import { axios } from "../../api/request"
 import { LOGIN_FAIL, LOGIN_SUCCESS, LOGOUT_SUCCESS, REGISTER_FAIL, REGISTER_SUCCESS } from "../types/authType";
 export const userRegister = (data) => {
 
@@ -14,7 +15,7 @@ export const userRegister = (data) => {
             const response = await axios.post('/api/chatapp/user-register', data, config);
             // console.log('response', response.data);
             // 请求成功，将获取到的 token 放入本地存储中 @kofeine 022623
-            localStorage.setItem('authToken', response.data.token);
+            localStorage.setItem("userInfo", JSON.stringify(response.data.userInfo));
             // 分发成功的 reducer  @kofeine 022623
             dispatch({
                 type: REGISTER_SUCCESS,
@@ -47,15 +48,17 @@ export const userLogin = (data) => {
         try {
 
             const response = await axios.post('/api/chatapp/user-login', data, config);
-            localStorage.setItem("authToken", response.data.token);
+            localStorage.setItem("userInfo", JSON.stringify(response.data.userInfo));
+            // console.log(JSON.stringify(response.data.userInfo))
             dispatch({
                 type: LOGIN_SUCCESS,
                 payload: {
                     successMessage: response.data.successMessage,
-                    token: response.data.token
+                    userInfo: response.data.userInfo
                 }
             })
         } catch (error) {
+            console.log(error)
             dispatch({
                 type: LOGIN_FAIL,
                 payload: {
@@ -66,7 +69,16 @@ export const userLogin = (data) => {
         }
     }
 }
+// 获取个人信息 @kofeine 033123
+export const userInfo = async (dispatch) => {
+    try {
+        const response = await axios.get('/api/chat-app/user-info');
+        console.log('gettng user info !!!!!!!!!!!!!!!!!!!!!', response.data);
+    } catch (error) {
 
+        console.log('gettng user info !!!!!!!!!!!!!!!!!!!!!', error.response.data);
+    }
+}
 export const userLogout = async (dispatch) => {
     try {
         const response = await axios.post('/api/chatapp/user-logout');

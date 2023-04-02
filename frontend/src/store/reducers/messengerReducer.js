@@ -1,4 +1,4 @@
-import { ADD_REQUEST_FAIL, ADD_REQUEST_SUCCESS, GET_ALL_REQUESTS_SUCCESS, GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, GET_THEME_SUCCESS, REMOVE_UNSEEN, RESET_SENDSUCCESS, SEARCH_FRIEND_ERROR, SEARCH_FRIEND_NOT_FOUND, SEARCH_FRIEND_SUCCESS, SEND_MESSAGE_SUCCESS, SET_READ, SET_THEME_SUCCESS, SOCKET_MESSAGE, UPDATE_MESSAGE, UPDATE_REQUESTS, UPDATE_UNSEEN } from "../types/messengerTypes";
+import { ADD_FRIEND_ERROR, ADD_FRIEND_SUCCESS, ADD_REQUEST_FAIL, ADD_REQUEST_SUCCESS, CLEAR_SUCCES_ERROR, GET_ALL_REQUESTS_SUCCESS, GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, GET_THEME_SUCCESS, REMOVE_UNSEEN, RESET_SENDSUCCESS, SEARCH_FRIEND_ERROR, SEARCH_FRIEND_NOT_FOUND, SEARCH_FRIEND_SUCCESS, SEND_MESSAGE_SUCCESS, SET_READ, SET_THEME_SUCCESS, SOCKET_MESSAGE, UPDATE_MESSAGE, UPDATE_REQUESTS, UPDATE_REQUESTS_ACCEPT, UPDATE_UNSEEN } from "../types/messengerTypes";
 
 const messengerState = {
     friends: [],
@@ -8,11 +8,15 @@ const messengerState = {
     targetUser: {},
     requests: [],
     addError: '',
-    addSuccess: ''
+    addSuccess: '',
+    acceptSuccess: '',
+    acceptError: '',
+    tokenInvalid: []
 };
 
 const messengerReducer = (state = messengerState, action) => {
     const { type, payload } = action;
+
     if (type === GET_FRIENDS_SUCCESS) {
         return {
             ...state,
@@ -58,6 +62,7 @@ const messengerReducer = (state = messengerState, action) => {
     if (type === REMOVE_UNSEEN) {
         const friendIndex = state.friends.findIndex(f => f.info._id === payload.friendId);
         state.friends[friendIndex].unseenMessages = payload.sentMsg;
+        console.log('remove unseen ', state.friends[friendIndex]);
         return {
             ...state,
 
@@ -98,7 +103,7 @@ const messengerReducer = (state = messengerState, action) => {
             ...state,
             requests: [payload.request, ...state.requests],
             addError: '',
-            addSuccess: 'Request Sent'
+            addSuccess: 'Invitation Successfully Sent'
         }
     }
     if (type === GET_ALL_REQUESTS_SUCCESS) {
@@ -110,7 +115,46 @@ const messengerReducer = (state = messengerState, action) => {
     if (type === UPDATE_REQUESTS) {
         return {
             ...state,
-            requests: [payload.request, ...state.requests]
+            requests: [payload.request, ...state.requests],
+            targetUser: ''
+        }
+    }
+    if (type === UPDATE_REQUESTS_ACCEPT) {
+        state.requests.forEach((rq, index) => {
+            if (rq.senderId === payload.friendId || rq.recieverId === payload.friendId) {
+                state.requests[index].status = 'accept';
+            }
+        })
+        console.log('payload friendId', payload.friendId)
+        return {
+            ...state,
+            // requests: state.requests
+        }
+    }
+
+    // 通过邀请，将这两个人相关的所有邀请设为通过 @kofeine 032823
+    if (type === ADD_FRIEND_SUCCESS) {
+        let friendName;
+        state.requests.forEach((rq, index) => {
+            if (rq.senderId === payload.friendId) { state.requests[index].status = 'accept'; friendName = rq.senderName }
+        })
+        return {
+            ...state,
+            requests: state.requests,
+            friends: [payload.friend, ...state.friends],
+            acceptSuccess: {
+                friendName, friendId: payload.friendId
+            }
+        }
+    }
+    if (type === ADD_FRIEND_ERROR) {
+        state.requests.forEach((rq, index) => {
+            if (rq.senderId === payload.friendId) state.requests[index].status = 'accept';
+        })
+        return {
+            ...state,
+            requests: state.requests,
+            acceptError: payload.error
         }
     }
     if (type === SEARCH_FRIEND_NOT_FOUND || type === SEARCH_FRIEND_ERROR) {
@@ -124,6 +168,15 @@ const messengerReducer = (state = messengerState, action) => {
         return {
             ...state,
             theme: payload.theme
+        }
+    }
+    if (type === CLEAR_SUCCES_ERROR) {
+        return {
+            ...state,
+            addSuccess: '',
+            addError: '',
+            acceptError: '',
+            acceptSuccess: ''
         }
     }
     return state;

@@ -5,7 +5,9 @@
   "dependencies": {
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
-    "@mui/material": "^5.11.14",
+    "@mui/icons-material": "^5.11.11",
+    "@mui/material": "^5.11.15",
+    "@mui/styled-engine-sc": "^5.11.11",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -28,6 +30,7 @@
     "redux": "^4.2.1",
     "redux-thunk": "^2.4.2",
     "socket.io-client": "^4.6.1",
+    "styled-components": "^5.3.9",
     "use-sound": "^4.0.1",
     "web-vitals": "^2.1.4"
   },
@@ -55,7 +58,7 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:5000",
+  "proxy": "https://localhost:5000",
   "devDependencies": {
     "cross-env": "^7.0.3"
   }

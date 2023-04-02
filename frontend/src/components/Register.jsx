@@ -43,6 +43,7 @@ const Register = () => {
       setLoadImage(reader.result);
     };
     reader.readAsDataURL(e.target.files[0]);
+    console.log(state.image);
   };
 
   const submitHandler = (e) => {
@@ -60,6 +61,7 @@ const Register = () => {
     formData.append("password", password);
     formData.append("confirmPassword", confirmPassword);
     // append方法如果传入三个参数，那么第二个参数需要为 Blob 对象。
+
     //如果文件为空，那么 image 就不是 Blob 对象，会产生错误 @kofeine 022623
     if (image) {
       // 文件非空，第二个参数传 Blob 对象，传 3 个参数 @kofeine 022623

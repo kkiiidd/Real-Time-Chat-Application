@@ -3,7 +3,6 @@ const formidable = require('formidable');
 const fs = require('fs');
 const authModel = require('../models/authModel');
 const requestModel = require('../models/requestModel');
-const friendModel = require('../models/friendModel');
 const findLastMessage = async (myId, frdId) => {
     try {
         const lastMessage = await messageModel.findOne({
@@ -79,20 +78,19 @@ const getFriends = async (req, res) => {
     // console.log('myId', myId);
     const userSchema = require('../models/authModel');
     try {
-        const friends = await userSchema.find({
+        const me = await userSchema.findOne({
             _id: {
-                $ne: myId
+                $eq: myId
             }
-        });
-        // const filteredFriends = friends.filter(frd => frd.id !== myId);
-        const filteredFriends = friends
-        // console.log('filteredFriends', filteredFriends)
+        }).populate("friends", "-friends");
+        const friends = me.friends;
+
         let friendsInfo = [];
-        // console.log('friends', friends);
+        console.log('friends !!!!!!!!!!!!!!!!!!!!!!!', friends);
         for (let i = 0; i < friends.length; i++) {
             const lastMessage = await findLastMessage(myId, friends[i]._id);
             const unseenMessages = await findUnseenMessages(myId, friends[i]._id) || [];
-            console.log('lastMessage', lastMessage)
+            // console.log('lastMessage', lastMessage)
             friendsInfo = [...friendsInfo, {
                 lastMessage,
                 unseenMessages,
@@ -380,23 +378,84 @@ module.exports.addFriend = async (req, res) => {
     const { reqId, myId, friendId } = req.body;
     try {
         console.log('add friend', reqId, myId, friendId);
-        await requestModel.findByIdAndUpdate(reqId, {
+        const result = await requestModel.updateMany({
+            $or: [{
+                $and: [
+                    {
+                        recieverId: {
+                            $eq: myId
+                        },
+                    },
+                    {
+                        senderId: {
+                            $eq: friendId
+                        }
+                    }
+                ]
+
+            }, {
+                $and: [{
+                    recieverId: {
+                        $eq: friendId
+                    }
+
+                }, {
+                    senderId: {
+                        $eq: myId
+                    }
+                }]
+            }]
+        }, {
             status: 'accept'
         })
-        const isMeExist = await friendModel.findById(myId);
-        if (isMeExist) {
-            const friendList = await friendModel.findByIdAndUpdate({
+        console.log('result:', result);
+        // 修改我的朋友列表 @kofeine 032923
+        await authModel.findByIdAndUpdate(myId, {
+            $addToSet: {
+                friends: friendId
+            }
+        })
+        // 修改好友的朋友列表 @kofeine 032923
+        await authModel.findByIdAndUpdate(friendId, {
+            $addToSet: {
+                friends: myId
+            }
+        })
 
-            })
+        // 把当前添加的朋友返回去,展示在朋友列表中 @kofeine 032923
+        const friend = await authModel.findOne({
+            _id: {
+                $eq: friendId
+            }
+        }, "-friends");
+        let friendInfo;
 
+        const lastMessage = await findLastMessage(myId, friendId);
+        const unseenMessages = await findUnseenMessages(myId, friendId) || [];
+
+        friendInfo = {
+            lastMessage,
+            unseenMessages,
+            info: friend
         }
 
+        res.status(201).json({
+            success: true,
+            friend: friendInfo
+        });
     } catch (error) {
         res.status(500).json({
             error: {
                 code: 500,
-                errorMessage: "Internal Server Error"
+                errorMessage: ["Internal Server Error", error]
             }
         })
     }
+}
+module.exports.addMoment = (req, res) => {
+    const form = formidable({ multiples: true });
+    form.parse(req, async (err, fields, files) => {
+        const { content } = fields;
+        console.log(content, files);
+    });
 }

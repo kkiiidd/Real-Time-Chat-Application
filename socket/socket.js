@@ -1,11 +1,19 @@
 const io = require('socket.io')(8000, {
     cors: {
         origin: '*',
-        methods: ['GET', 'POST']
+        methods: ['GET', 'POST'],
+        handlePreflightRequest: (req, res) => {
+            res.writeHead(200, {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET,POST",
+                "Access-Control-Allow-Headers": "my-custom-header",
+                "Access-Control-Allow-Credentials": true
+            });
+            res.end();
+        }
     }
 })
 const users = [];
-let isTyping = false;
 
 // 加入新上线的人 @kofeine 032123
 const addUser = (socketId, userId, userInfo) => {
@@ -27,7 +35,9 @@ io.on('connection', (socket) => {
     console.log('Socket is connecting');
     socket.on('addUser', (userId, userInfo) => {
         addUser(socket.id, userId, userInfo);
-        // console.log(users);
+        // console.log('addUser', users);
+        console.log('addUser userinfo', userInfo.userName);
+
         io.emit('getActiveUser', users);
     })
     socket.on('disconnect', () => {
@@ -72,6 +82,15 @@ io.on('connection', (socket) => {
         console.log(users, targetFriend);
         if (targetFriend) {
             socket.to(targetFriend.socketId).emit('someoneAddYou', data.request);
+
+        }
+    })
+    socket.on('addFriendSuccess', data => {
+        console.log('add friend data:', data);
+        const targetFriend = findFriend(data.friendInfo.friendId);
+        console.log('someoneAddYouSuccess', users, targetFriend);
+        if (targetFriend) {
+            socket.to(targetFriend.socketId).emit('someoneAddYouSuccess', data);
 
         }
     })

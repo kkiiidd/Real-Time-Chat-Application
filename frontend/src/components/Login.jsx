@@ -12,6 +12,7 @@ const Login = () => {
   const { loading, authenticated, error, successMessage, myInfo } = useSelector(
     (state) => state.auth
   );
+
   const [state, setState] = useState({
     email: "",
     password: "",
@@ -30,6 +31,9 @@ const Login = () => {
     // formData.append("password", state.password);
     dispatch(userLogin(state));
   };
+  // if (searchParams && searchParams){
+  //   alert.error(searchParams)
+  // }
   useEffect(() => {
     if (authenticated) {
       // 如果已授权，则跳转至首页 @kofeine 031023
@@ -46,6 +50,7 @@ const Login = () => {
       dispatch({ type: CLEAR_FAIL });
     }
   }, [successMessage, error, authenticated]);
+
   return (
     <div className="account login">
       <div className="card">

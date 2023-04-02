@@ -1,4 +1,4 @@
-const { getFriends, sendMessage, getMessage, sendImage, seenAll, getTargetUser, addRequest, getRequest, addFriend } = require('../controller/messengerController');
+const { getFriends, sendMessage, getMessage, sendImage, seenAll, getTargetUser, addRequest, getRequest, addFriend, addMoment } = require('../controller/messengerController');
 const { authMiddleware } = require('../middleware/authMiddleware');
 
 const router = require('express').Router();
@@ -12,4 +12,5 @@ router.get('/get-target-user/:email', authMiddleware, getTargetUser);
 router.post('/add-request', authMiddleware, addRequest);
 router.get('/get-request/:id', authMiddleware, getRequest);
 router.post('/add-friend', authMiddleware, addFriend);
+router.post('/add-moment', authMiddleware, addMoment);
 module.exports = router;

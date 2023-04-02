@@ -21,8 +21,10 @@ import toast, { Toaster } from "react-hot-toast";
 // 引入音频 @kofeine 032323
 import notificationSound from "../audio/audio_notification.mp3";
 import sendSound from "../audio/audio_sending.mp3";
+
 // 引入 socketio @kofeine 032023
 import { io } from "socket.io-client";
+
 import { userLogout } from "../store/actions/authAction";
 import {
   RESET_SENDSUCCESS,
@@ -31,10 +33,23 @@ import {
   SOCKET_TYPING,
   UPDATE_MESSAGE,
   UPDATE_REQUESTS,
+  UPDATE_REQUESTS_ACCEPT,
   UPDATE_UNSEEN,
 } from "../store/types/messengerTypes";
 import { AddFriend } from "./AddFriend";
-import { Switch, Route, Routes, NavLink, Outlet, Link } from "react-router-dom";
+import {
+  Switch,
+  Route,
+  Routes,
+  NavLink,
+  Outlet,
+  Link,
+  useNavigate,
+} from "react-router-dom";
+import { useAlert } from "react-alert";
+import { CLEAR_TOKEN_INVALID } from "../store/types/authType";
+import { AddMoment } from "./AddMoment";
+import { Moment } from "./Moment";
 
 const Messenger = () => {
   const dispatch = useDispatch();
@@ -55,22 +70,28 @@ const Messenger = () => {
   const [socketTyping, setSocketTyping] = useState(false);
   // socket 好友邀请状态 @kofeine 032723
   const [socketFriendAdd, setSocketFriendAdd] = useState("");
+  const [socketFriendAdded, setSocketFriendAdded] = useState("");
   // 从 redux 中获取 reducer 中 state 的内容 @kofeine 031723
   const { friends, messages, sendSuccess, theme, requests } = useSelector(
     (state) => state.messenger
   );
-  const { myInfo } = useSelector((state) => state.auth);
+  const { myInfo, tokenInvalid } = useSelector((state) => state.auth);
 
+  // 通知 @kofeine 040123
+  const alert = useAlert();
   // 滚动 @kofeine 031923
   const scrollRef = useRef();
 
   // 定义socket ref @kofeine 032023
-
   const socket = useRef();
+
   const [hide, setHide] = useState(true);
 
   // 计时器 @kofeine 032223
   const countdown = useRef();
+
+  // 路由导航方法 @kofeine 040123
+  const navigate = useNavigate();
   const handleSend = () => {
     // console.log(currentInput);
     const data = {
@@ -162,7 +183,22 @@ const Messenger = () => {
   const logout = () => {
     dispatch(userLogout);
   };
-
+  useEffect(() => {
+    navigate("/rightside");
+  }, []);
+  // token失效 @kofeine 040123
+  useEffect(() => {
+    console.log("token invalid", tokenInvalid);
+    if (tokenInvalid.length > 0) {
+      alert.error(tokenInvalid[0]);
+      console.log("alert !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+      socket.current.close();
+      dispatch({
+        type: CLEAR_TOKEN_INVALID,
+      });
+      navigate("/login");
+    }
+  }, [tokenInvalid]);
   // 建立 socket 连接 @kofeine 032023
   useEffect(() => {
     socket.current = io("ws://localhost:8000");
@@ -172,6 +208,7 @@ const Messenger = () => {
 
       setSocketMessage(data);
     });
+    // 好友正在输入 @kofeine 040123
     socket.current.on("youAreTyping", (data) => {
       // console.log("data", data, currentFriend, myInfo.id);
       setSocketTyping(data);
@@ -181,6 +218,7 @@ const Messenger = () => {
       //     setSocketTyping(false);
       //   }, 2000);
     });
+    // 信息已被好友阅读 @kofeine 040123
     socket.current.on("yourMsgHasBeenRead", (data) => {
       // console.log("my msg has been read:", data);
       dispatch({
@@ -199,6 +237,11 @@ const Messenger = () => {
       console.log("someone add me", data);
       setSocketFriendAdd(data);
     });
+    // 好友通过了邀请 @kofeine 032723
+    socket.current.on("someoneAddYouSuccess", (data) => {
+      console.log("someone added me", data);
+      setSocketFriendAdded(data.friendInfo);
+    });
   }, []);
 
   // 加入聊天室 @kofeine 032123
@@ -209,7 +252,7 @@ const Messenger = () => {
   // 获取在线好友 @kofeine 032123
   useEffect(() => {
     socket.current.on("getActiveUser", (users) => {
-      console.log(users);
+      console.log("getActiveUser", users);
       setActiveFriends(users);
     });
   }, []);
@@ -286,8 +329,27 @@ const Messenger = () => {
           request: socketFriendAdd,
         },
       });
+      notificationSPlay();
+      toast.success(
+        socketFriendAdd.senderName + " Send You A Friend Invitation"
+      );
     }
   }, [socketFriendAdd]);
+
+  // 好友通过了添加 @kofeine 032723
+  useEffect(() => {
+    console.log("someone added me friend id", socketFriendAdded.friendId);
+    if (socketFriendAdded) {
+      dispatch({
+        type: UPDATE_REQUESTS_ACCEPT,
+        payload: {
+          friendId: socketFriendAdded.friendId,
+        },
+      });
+      notificationSPlay();
+      toast.success(socketFriendAdded.friendName + " Accept Friend Invitation");
+    }
+  }, [socketFriendAdded]);
   // 播放提示音，发送方不为当前好友时 @kofeine 032323
   useEffect(() => {
     // 先判断发送人与接收人 @kofeine 032323
@@ -317,13 +379,16 @@ const Messenger = () => {
     dispatch(getTheme);
   }, []);
   useEffect(() => {
+    console.log("change current friend !!!!!", friends);
     if (!currentFriend && friends.length > 0) setCurrentFriend(friends[0].info);
   }, [friends]);
 
   // 监听是否在切换当前好友，获取当前好友的信息，检测 currentFriend @kofeine 031823
   useEffect(() => {
-    dispatch(getMessage(currentFriend._id));
-    dispatch(seenAllCurrentFriendMessages(currentFriend._id));
+    if (currentFriend._id) {
+      dispatch(getMessage(currentFriend._id));
+      dispatch(seenAllCurrentFriendMessages(currentFriend._id));
+    }
     // 接收到信息，告诉对方已收到，设为已读 @kofeine 032423
     socket.current.emit("haveRead", socketMessage);
   }, [currentFriend?._id]); // 有的话检测其 _id 值 @kofeine 031823
@@ -428,6 +493,8 @@ const Messenger = () => {
               <nav>
                 <Link to="/addfriend">Add Friend</Link>
                 <Link to="/rightside">Message</Link>
+                <Link to="/addmoment">Add Moment</Link>
+                <Link to="/moment">Moment</Link>
               </nav>
             </div>
             <div className="active-friends">
@@ -436,13 +503,14 @@ const Messenger = () => {
                   (aFrd) =>
                     aFrd.userInfo.id !== myInfo.id && (
                       <ActiveFriends
+                        key={aFrd.userInfo.id}
                         user={aFrd}
-                        onClick={() => {
+                        onClickFunc={() => {
                           const aFriend = friends.find(
-                            (frd) => aFrd.userInfo.id === frd._id
+                            (frd) => aFrd.userInfo.id === frd.info._id
                           );
-                          // console.log(aFriend);
-                          setCurrentFriend(aFriend);
+                          // console.log(aFriend.info);
+                          setCurrentFriend(aFriend.info);
                         }}
                       />
                     )
@@ -459,6 +527,7 @@ const Messenger = () => {
                           : "hover-friend"
                       }
                       onClick={() => setCurrentFriend(frd.info)}
+                      key={frd.info._id}
                     >
                       <Friend
                         friend={frd}
@@ -497,6 +566,11 @@ const Messenger = () => {
             element={<AddFriend socket={socket} />}
             path="addfriend"
           ></Route>
+          <Route
+            element={<AddMoment socket={socket} />}
+            path="addmoment"
+          ></Route>
+          <Route element={<Moment socket={socket} />} path="moment"></Route>
         </Routes>
         <Outlet />
       </div>

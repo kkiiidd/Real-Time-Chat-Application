@@ -3,13 +3,14 @@ const formidable = require('formidable');
 // 引入 validator @kofeine 2023/02/14 23:14
 const validator = require('validator');
 // 引入注册model @kofeine 2023/02/15 23:14
-const registerModel = require('../models/authModel');
+const authModel = require('../models/authModel');
 // 引入文件模块，将前端上传的头像图片存到服务器本地 @kofeine 022023
 const fs = require('fs');
 // 引入 bcrypt 对密码进行加密 @kofeine 022023
 const bcrypt = require('bcrypt');
 // 引入jsonwebtoken，使用其 sign 方法生成 token @kofeine 022023
 const jwt = require('jsonwebtoken');
+const whiteModel = require('../models/whiteModel');
 
 
 // 在 控制器 验证数据 @kofeine 2023/02/13 21:43
@@ -61,7 +62,7 @@ module.exports.userRegister = (req, res) => {
             console.log(newFilePath)
             // 验证邮箱是否被注册 @kofeine 2023/02/15 23:06
             try {
-                const isEmailExist = await registerModel.findOne({
+                const isEmailExist = await authModel.findOne({
                     email: email
                 })
                 if (isEmailExist) {
@@ -75,12 +76,13 @@ module.exports.userRegister = (req, res) => {
                     // 邮箱可用 @kofeine 032023
                     // console.log('not exist')
                     // 将文件从源路径异步复制到目标路径 @kofeine 2023/02/16 22:46
+
                     fs.copyFile(files.image.filepath, newFilePath, async (error) => {
                         console.log('copyFile');
                         if (!error) {
                             console.log('no error')
                             // 使用当前用户数据在 user 表中创建一条数据 @kofeine 2023/02/16 21:56
-                            const userCreate = await registerModel.create({
+                            const userCreate = await authModel.create({
                                 email,
                                 userName,
                                 // 密码需要加密，使用bcrypt @kofeine 2023/02/16 22:02
@@ -107,16 +109,25 @@ module.exports.userRegister = (req, res) => {
                             console.log('token:', token);
                             // console.log(new Date());
                             // console.log(process.env.COOKIE_EXP * 24 * 60 * 60 * 1000);
+
+                            // expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000),
+                            // maxAge 格式为时间戳，expires 格式为日期
+                            // cookie 有效期 @kofeine 022023
                             const options = {
-                                // maxAge: Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000,
-                                expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
-                                // cookie 有效期 @kofeine 022023
-                                // maxAge 格式为时间戳，expires 格式为日期
+                                maxAge: Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000,
+                                httpOnly: true,
+                                path: '/'
                             };
                             // 发送成功响应信息，携带 token ，放入cookie @kofeine 022223
                             res.status(201).cookie('authToken', token, options).json({
                                 successMessage: 'You have successfully registered !',
-                                token
+                                userInfo: {
+                                    id: userCreate._id,
+                                    email: userCreate.email,
+                                    userName: userCreate.userName,
+                                    friends: userCreate.friends,
+                                    image: userCreate.image,
+                                }
                             });
 
                         } else {
@@ -146,6 +157,8 @@ module.exports.userRegister = (req, res) => {
     console.log("user is registering")
 }
 
+
+// 登录 @kofeine 033123
 module.exports.userLogin = async (req, res) => {
     const email = req.body.email;
     const password = req.body.password
@@ -168,7 +181,7 @@ module.exports.userLogin = async (req, res) => {
             })
         }
         else {
-            const getUser = await registerModel.findOne({ email: email }).select("+password");
+            const getUser = await authModel.findOne({ email: email }).select("+password");
             // console.log(getUser.password);
             if (getUser) {
                 const passwordIsMatch = await bcrypt.compare(password, getUser.password);
@@ -179,17 +192,35 @@ module.exports.userLogin = async (req, res) => {
                         userName: getUser.userName,
                         password: getUser.password,
                         registerTime: getUser.createdAt,
-                        image: getUser.image
-
+                        image: getUser.image,
+                        time: Date.now
                     }, process.env.SECRET, {
                         expiresIn: process.env.TOKEN_EXP
                     })
+
+                    // 查看当前账号是否在白名单 @kofeine 033123
+
+                    const removeResult = await whiteModel.findOneAndRemove({ userId: getUser._id })
+                    console.log('removeResult', removeResult);
+                    const createResult = await whiteModel.create({
+                        userId: getUser._id,
+                        token,
+                    })
+                    console.log('createResult', createResult);
                     const options = {
-                        expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
+                        expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000),
+                        httpOnly: true,
+                        path: '/'
                     };
                     res.status(201).cookie("authToken", token, options).json({
                         successMessage: "you have successfully logged in",
-                        token
+                        userInfo: {
+                            id: getUser._id,
+                            email: getUser.email,
+                            userName: getUser.userName,
+                            friends: getUser.friends,
+                            image: getUser.image,
+                        }
                     })
                 } else {
                     res.status(400).json({
@@ -207,6 +238,7 @@ module.exports.userLogin = async (req, res) => {
             }
         }
     } catch (err) {
+        console.log('log in fail')
         res.status(500).json({
             error: {
                 errorMessage: ["Interval Server Error", err]
@@ -215,6 +247,27 @@ module.exports.userLogin = async (req, res) => {
     }
 
     // res.send('message from user-login controller')
+}
+module.exports.getInfo = async (req, res) => {
+    try {
+        const userInfo = await authModel.findById(req.id);
+
+        const { image, userName, email, friends, _id } = userInfo;
+        res.status(201).json({
+            image,
+            userName,
+            email,
+            friends,
+            id: _id
+
+        })
+    } catch (error) {
+        res.status(500).json({
+            error: {
+                errorMessage: "Interval Server Error"
+            }
+        })
+    }
 }
 module.exports.userLogout = (req, res) => {
     try {

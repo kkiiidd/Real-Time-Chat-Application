@@ -1,4 +1,7 @@
 const express = require('express');
+// const helmet = require('helmet');
+const fs = require('fs');
+const https = require('https');
 const app = express();
 
 // 引入dotenv @kofeine 2023/02/09 22:48
@@ -24,14 +27,28 @@ databaseConnect();
 //初始化端口号 @kofeine,2023-01-28-14:53:09
 const PORT = process.env.PORT || 5000;
 
+
+// 配置 https @kofeine 033123
+const privateKey = fs.readFileSync('privatekey.pem');
+const certificate = fs.readFileSync('certificate.pem');
+const httpsOptions = {
+    key: privateKey,
+    cert: certificate
+};
+
+
 app.use(bodyParser.json());
-app.use(cookieParser());
+app.use(cookieParser("hayes"));
 app.use('/api/chatapp', authRouter);
 app.use('/api/chatapp', messengerRouter);
 
 app.get('/', (req, res) => {
     res.send('Welcom to my RealTimeChat App')
 })
-app.listen(PORT, () => {
-    console.log(`Server is runnig on port ${PORT}`);
-})
+// app.listen(PORT, () => {
+//     console.log(`Server is runnig on port ${PORT}`);
+// })
+
+https.createServer(httpsOptions, app).listen(PORT, function () {
+    console.log(`Server is runnig on port ${PORT} (Https)`);
+});

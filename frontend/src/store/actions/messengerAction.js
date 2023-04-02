@@ -1,5 +1,7 @@
-import axios from "axios";
-import { ADD_REQUEST_FAIL, ADD_REQUEST_SUCCESS, GET_ALL_REQUESTS_SUCCESS, GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, GET_THEME_SUCCESS, REMOVE_UNSEEN, SEARCH_FRIEND_ERROR, SEARCH_FRIEND_NOT_FOUND, SEARCH_FRIEND_SUCCESS, SEND_MESSAGE_SUCCESS, SET_THEME_SUCCESS, UPDATE_MESSAGE, UPDATE_UNSEEN } from "../types/messengerTypes";
+// import axios from "axios";
+import { axios } from '../../api/request';
+import { TOKEN_INVALID } from '../types/authType';
+import { ADD_FRIEND_ERROR, ADD_FRIEND_SUCCESS, ADD_REQUEST_FAIL, ADD_REQUEST_SUCCESS, GET_ALL_REQUESTS_SUCCESS, GET_FRIENDS_SUCCESS, GET_MESSAGE_SUCCESS, GET_THEME_SUCCESS, REMOVE_UNSEEN, SEARCH_FRIEND_ERROR, SEARCH_FRIEND_NOT_FOUND, SEARCH_FRIEND_SUCCESS, SEND_MESSAGE_SUCCESS, SET_THEME_SUCCESS, UPDATE_MESSAGE, UPDATE_UNSEEN } from "../types/messengerTypes";
 
 export const getFriends = async (dispatch) => {
     console.log('get Friends')
@@ -85,7 +87,7 @@ export const seenAllCurrentFriendMessages = (friendId) => {
     return async (dispatch) => {
         try {
             const response = await axios.post('/api/chatapp/seen-all/' + friendId);
-            console.log('seen all response', response.data);
+            console.log('seen all response', friendId, response.data);
             dispatch({
                 type: REMOVE_UNSEEN,
                 payload: {
@@ -94,7 +96,7 @@ export const seenAllCurrentFriendMessages = (friendId) => {
                 }
             })
         } catch (error) {
-            console.log('seen all error:', error)
+            console.log('seen all error:', error.response.data)
         }
     }
 }
@@ -217,8 +219,21 @@ export const acceptAddFriend = (reqId, myId, friendId) => {
                 reqId, myId, friendId
             })
             console.log(response.data);
+            dispatch({
+                type: ADD_FRIEND_SUCCESS,
+                payload: {
+                    friendId,
+                    friend: response.data.friend
+                }
+            })
         } catch (error) {
             console.log('add request error:', error.response.data);
+            dispatch({
+                type: ADD_FRIEND_ERROR,
+                payload: {
+                    error: error.response.data.error.errorMessage
+                }
+            })
         }
 
     }

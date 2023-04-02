@@ -1,8 +1,8 @@
 import React from "react";
 
-const ActiveFriends = ({ user, onClick }) => {
+const ActiveFriends = ({ user, onClickFunc }) => {
   return (
-    <div className="active-friend" onClick={onClick}>
+    <div className="active-friend" onClick={onClickFunc}>
       <div className="image-active-icon">
         <div className="image">
           <img src={user.userInfo.image} alt="" />

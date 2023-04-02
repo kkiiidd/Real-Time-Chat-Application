@@ -17,15 +17,21 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Avatar from "@mui/material/Avatar";
 import { Button } from "@mui/material";
+import { CLEAR_SUCCES_ERROR } from "../store/types/messengerTypes";
 // import SendIcon from "@mui/icons-material/Send";
 
 export const AddFriend = ({ socket }) => {
   const alert = useAlert();
   const [targetEmail, setTargetEmail] = useState("");
   const dispatch = useDispatch();
-  const { targetUser, requests, addError, addSuccess } = useSelector(
-    (state) => state.messenger
-  );
+  const {
+    targetUser,
+    requests,
+    addError,
+    addSuccess,
+    acceptSuccess,
+    acceptError,
+  } = useSelector((state) => state.messenger);
   const { myInfo } = useSelector((state) => state.auth);
   const searchUser = (email) => {
     dispatch(getTargetUser(email));
@@ -48,14 +54,24 @@ export const AddFriend = ({ socket }) => {
     if (addError) alert.error(addError.errorMessage);
     // 添加好友邀请成功 @kofeine 032723
     else if (addSuccess) {
-      alert.success(addSuccess);
+      alert.success("Request Sent");
+
       socket.current.emit("addFriend", {
         request: requests.filter((r) => r.senderId === myInfo.id)[0],
       });
+    } else if (acceptSuccess) {
+      socket.current.emit("addFriendSuccess", {
+        friendInfo: acceptSuccess,
+        // {friendName,firendId} @kofeine 032823
+      });
     }
+    dispatch({
+      type: CLEAR_SUCCES_ERROR,
+    });
     // console.log(addError);
-  }, [addError, addSuccess]);
+  }, [addError, addSuccess, acceptError, acceptSuccess]);
   // console.log("target user", targetUser);
+
   return (
     <div className="col-9">
       <div className="row">
@@ -99,14 +115,18 @@ export const AddFriend = ({ socket }) => {
                             <Avatar alt="Remy Sharp" src={rq.senderImage} />
                           </ListItemIcon>
                           <ListItemText primary={rq.senderName} />
-                          <Button
-                            variant="contained"
-                            onCLick={() =>
-                              acceptAdd(rq._id, rq.recieverId, rq.senderId)
-                            }
-                          >
-                            Accept
-                          </Button>
+                          {rq.status === "pending" ? (
+                            <Button
+                              variant="contained"
+                              onClick={() =>
+                                acceptAdd(rq._id, rq.recieverId, rq.senderId)
+                              }
+                            >
+                              Accept
+                            </Button>
+                          ) : (
+                            <Button disabled>Added</Button>
+                          )}
                         </ListItemButton>
                       ) : (
                         <ListItemButton>
@@ -114,6 +134,13 @@ export const AddFriend = ({ socket }) => {
                             <Avatar alt="Remy Sharp" src={rq.recieverImage} />
                           </ListItemIcon>
                           <ListItemText primary={rq.recieverName} />
+                          {rq.status === "pending" ? (
+                            <Button variant="contained" disabled>
+                              Waiting
+                            </Button>
+                          ) : (
+                            <Button disabled>Added</Button>
+                          )}
                         </ListItemButton>
                         // <>
                         //   <img

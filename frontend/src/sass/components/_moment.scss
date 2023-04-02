@@ -1,0 +1,14 @@
+.moment {
+    .moment-list {
+
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+    }
+
+    .moment-item {
+        margin: 10px;
+    }
+
+    overflow-y: scroll;
+}
